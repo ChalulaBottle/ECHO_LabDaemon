@@ -7,6 +7,17 @@ test the hooks, and it must run on the smaller board too (both plugged in, both 
 
 ## RESUME STATE
 
+- 2026-10-14, built on branch `feat/tray-wf-answer` (from `release/increment-4`; daemon `91a6f52`,
+  docs `1985c94`), not merged, not pushed, not live until the tray restarts on it: the tray waits
+  for the board's `wf` answer before it removes wifi.json (Increment 3, Housekeeping), the tray's
+  `_write_json_atomic` tries a refused replace 6 times 50 ms apart (Increment 4, Open), the root
+  README cmd section and the `pwr_toggles_stats` and `fixed_brightness` rows in
+  docs/porting/capability-flags.md. Daemon suite 717 passed, 2 skipped before; 754 passed, 2
+  skipped after. Firmware unchanged: nothing to flash, no re-pair. Exact next action: the main
+  session merges the branch into `release/increment-4`, then the tray restart (it runs this
+  checkout's `daemon` folder). Bring up: `wifi set` while only an AMOLED board is linked keeps
+  wifi.json, and daemon.log names that board (`has no Wi-Fi`); once the 4 inch board links it gets
+  the credentials and the log says `stored by 1 board(s), file removed`.
 - **2026-10-03 ~13:55, INCREMENT 5 (the dance view) BUILT, NOT FLASHED:** firmware `72ec2e7` and daemon
   `da89160` on `feat/dance-view`, merged into `release/increment-4` (this checkout); engine `e205b1c` on
   labdaemon-engine main (the dashboard's Dance view), engine not restarted. **Exact next action:** the
@@ -356,6 +367,13 @@ urgent notifications; the panel itself stays visual.
   Windows toast forwarding last (packaged-app restriction makes it unreliable).
 - Housekeeping: tray waits for the board's `wf` answer before deleting wifi.json; art download off
   the engine's main loop.
+  - 2026-10-14: the `wf` answer wait is built on branch `feat/tray-wf-answer` (daemon `91a6f52`),
+    not merged and not live until the tray restarts on it. One 3.5 s wait for all the boards, in a
+    task of its own; the file goes once a board answered `{"ack":true,"wf":"ok"}`; a plain nack
+    during that wait is a board without Wi-Fi, never a cmd's old firmware nack; a board that
+    refused a version, has no Wi-Fi or did not answer is not sent that version again, a board that
+    links later is; a link without TX counts its write as stored. The art download off the
+    engine's main loop is still open.
 
 ## Increment 4: the cmd message (2026-10-02, with the engine's dashboard)
 
@@ -387,6 +405,13 @@ plan is the engine repo's `plans/dashboard.md` (lanes A to D); this is the board
   a file that stays unreadable; lcd_4 V1 to V3 (TCA9554) can only switch the backlight; the root
   README cmd section, the serial poke paragraph and the `fixed_brightness` row in
   docs/porting/capability-flags.md.
+  - 2026-10-14, on branch `feat/tray-wf-answer`, not merged: the `_write_json_atomic` retry
+    (daemon `91a6f52`: 6 tries 50 ms apart; on the dev machine, with a reader holding a board
+    report, it went in at the 4th try, about 0.25 s after the first), the root README cmd section
+    and the `fixed_brightness` and `pwr_toggles_stats` rows in docs/porting/capability-flags.md
+    (docs `1985c94`). The serial poke paragraph still has no `cmd` entry of its own; the cmd
+    section names `cmd <verb> <value>`. Still open: the NVS write debounce for brightness, the
+    bounded skip in `take_cmds`, lcd_4 V1 to V3.
 
 ## Increment 5: the dance view (2026-10-03, the dancer bigger, a music video view)
 
