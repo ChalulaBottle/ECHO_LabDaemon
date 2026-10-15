@@ -340,10 +340,11 @@ the answers, one wait for all the boards, in a task of its own, so nothing else 
 does waits on it. The file is deleted once a board answered that it stored them. Until then it
 stays, so writing it while only a board without Wi-Fi is linked is fine: it waits for the 4
 inch board. A board that answered without storing them, or did not answer in time, is not
-sent that file again, even when it links again, while a board that links later and has not
-had it gets it. Write the file again to send it again to a board that missed it. A link that
-cannot hear its board's answers (the log says `TX subscription unavailable` when it links)
-has no answer to wait for, so its write counts as stored, as it always did. An answer that
+sent that file again, even when it links again, until the tray restarts, while a board that
+links later and has not had it gets it. Write the file again to send it again to a board that
+missed it. A link that cannot hear its board's answers (the log says `TX subscription
+unavailable` when it links) has no answer to wait for, so its write counts as stored, as it
+always did. An answer that
 comes after the wait only goes in the log. The log names each board that did not store them
 and why, then says what became of the file, and never shows the network name or the
 password. A file it cannot use is logged without its content and left for you to fix. A file

@@ -1719,8 +1719,8 @@ async def relay_wifi(seen):
     that waited for a board goes out as soon as one links). A version goes out ONCE, as its
     own message, to every board linked right now that has not had it, from whichever link
     comes to it first; the others see it busy and look again next tick. A board is known by
-    its address (_WIFI_TRIED), so one that links again is not sent the same version again,
-    while a board that links later gets it.
+    its address (_WIFI_TRIED, kept for as long as the tray runs), so one that links again is
+    not sent the same version again, while a board that links later gets it.
 
     The file is removed once a board answered that it stored them. The answers are awaited by
     a task of their own (_wifi_answers), all of them under the one WIFI_ANSWER_WAIT, so no

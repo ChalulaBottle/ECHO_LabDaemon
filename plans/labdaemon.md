@@ -371,9 +371,9 @@ urgent notifications; the panel itself stays visual.
     not merged and not live until the tray restarts on it. One 3.5 s wait for all the boards, in a
     task of its own; the file goes once a board answered `{"ack":true,"wf":"ok"}`; a plain nack
     during that wait is a board without Wi-Fi, never a cmd's old firmware nack; a board that
-    refused a version, has no Wi-Fi or did not answer is not sent that version again, a board that
-    links later is; a link without TX counts its write as stored. The art download off the
-    engine's main loop is still open.
+    refused a version, has no Wi-Fi or did not answer is not sent that version again until the
+    tray restarts (the record is in memory), a board that links later is; a link without TX
+    counts its write as stored. The art download off the engine's main loop is still open.
 
 ## Increment 4: the cmd message (2026-10-02, with the engine's dashboard)
 

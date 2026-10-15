@@ -1160,6 +1160,7 @@ def test_an_empty_ssid_goes_out_as_a_clear_and_the_file_goes(relay_files, logs, 
     assert sent == [{"wf": ""}, USAGE]
     assert not wifi.exists()
     assert f"{STORED} (empty ssid: the boards forget the network)" in logs
+    assert not _leaks(logs)
 
 
 def test_a_raw_key_goes_to_the_board_and_the_file_goes(relay_files, logs, fast):
@@ -1175,7 +1176,7 @@ def test_a_raw_key_goes_to_the_board_and_the_file_goes(relay_files, logs, fast):
     assert sent == [{"wf": "s" * 32, "wp": KEY}, USAGE]
     assert not wifi.exists()
     assert STORED in logs
-    assert not any(KEY in line for line in logs)
+    assert not any(KEY in line or "s" * 32 in line for line in logs)
 
 
 def test_credentials_no_board_took_wait_for_the_next_link(relay_files, logs, fast):

@@ -329,7 +329,7 @@ def test_an_answer_that_lands_in_the_write_gap_belongs_to_the_message_before(rel
     """The wait for the credentials' answer is armed at their write, past the write gap. A plain
     nack that lands during the gap answers the message before them (here a cmd on firmware without
     the cmd message), and the credentials still get their own answer after it."""
-    monkeypatch.setattr(mod, "WRITE_GAP", 0.2)
+    monkeypatch.setattr(mod, "WRITE_GAP", 0.5)
     wifi = relay_files / "wifi.json"
     board = Board(wifi="ok", cmd="mute")
     s = mod.Session(board.client, BOARD)
@@ -454,7 +454,7 @@ def test_a_clear_waits_for_a_board_with_wifi_too(relay_files, logs, fast):
 # ---------------------------------------------------------------------------
 
 def test_two_silent_boards_cost_one_wait_not_two(relay_files, logs, fast, monkeypatch):
-    monkeypatch.setattr(mod, "WIFI_ANSWER_WAIT", 0.4)
+    monkeypatch.setattr(mod, "WIFI_ANSWER_WAIT", 0.5)
     wifi = relay_files / "wifi.json"
     a, b = Board(wifi="mute"), Board(wifi="mute")
     span = []
@@ -467,9 +467,9 @@ def test_two_silent_boards_cost_one_wait_not_two(relay_files, logs, fast, monkey
         span.append(time.monotonic() - max(a.wf_at(), b.wf_at()))
 
     _drive({BOARD: a, BOARD_B: b}, scenario)
-    assert 0.4 - CLOCK_SLACK <= span[0] < 0.4 * 1.5       # one wait for both, counted from the last write
-    assert f"Wi-Fi credentials: no answer from {BOARD} in 0.4 s" in logs
-    assert f"Wi-Fi credentials: no answer from {BOARD_B} in 0.4 s" in logs
+    assert 0.5 - CLOCK_SLACK <= span[0] < 0.85            # one wait for both (two would be 1.0 s)
+    assert f"Wi-Fi credentials: no answer from {BOARD} in 0.5 s" in logs
+    assert f"Wi-Fi credentials: no answer from {BOARD_B} in 0.5 s" in logs
     assert wifi.exists()
     assert not _leaks(logs)
 
@@ -478,7 +478,7 @@ def test_no_link_waits_on_the_answers(relay_files, logs, fast, monkeypatch):
     """The wait runs as its own asyncio task: while one board says nothing, both links tick on,
     and a page written mid wait reaches both boards, the one whose link sent the credentials too,
     before the wait is over."""
-    monkeypatch.setattr(mod, "WIFI_ANSWER_WAIT", 1.0)
+    monkeypatch.setattr(mod, "WIFI_ANSWER_WAIT", 2.0)
     wifi = relay_files / "wifi.json"
     a, b = Board(wifi="ok"), Board(wifi="mute")
 
@@ -494,7 +494,7 @@ def test_no_link_waits_on_the_answers(relay_files, logs, fast, monkeypatch):
 
     _drive({BOARD: a, BOARD_B: b}, scenario)
     assert not wifi.exists()                                # a stored them
-    assert _wifi_lines(logs) == [f"Wi-Fi credentials: no answer from {BOARD_B} in 1 s", STORED]
+    assert _wifi_lines(logs) == [f"Wi-Fi credentials: no answer from {BOARD_B} in 2 s", STORED]
     assert not _leaks(logs)
 
 
