@@ -80,8 +80,8 @@ WATCH_TICK = 1.0           # state / approve file checks; TICK stays the poll ca
 # link itself (ART_CHAR_UUID below).
 # wifi.json {"ssid", "pass"} is the operator's (the engine's `wifi set` writes it), for the boards
 # built with Wi-Fi: it goes ONCE to every linked board as {"wf": ssid, "wp": pass} ({"wf": ""} for
-# an empty ssid: forget the network) and is removed once a board took it. Nothing of it ever
-# reaches the log.
+# an empty ssid: forget the network) and is removed once a board answered that it stored them
+# (WIFI_ANSWER_WAIT). Nothing of it ever reaches the log.
 # cmd/<ns>.json {"c", "v", "expires"} is a named verb for the boards (the engine's board
 # controller writes it): each goes ONCE, in name order, to every linked board as {"c": verb,
 # "v": value}, and the file is removed. A board answers on TX with {"c": verb, "ok": 1},
@@ -108,6 +108,13 @@ WIFI_SSID_MAX = 32         # ssid, in bytes of UTF-8: the 802.11 limit, and the 
 WIFI_PASS_MIN = 8          # pass, in bytes of UTF-8: empty (an open network), or a WPA passphrase
 WIFI_PASS_MAX = 63         # of 8 to 63 characters, the rule of the board and the engine's wifi set,
 WIFI_PSK = re.compile(r"[0-9A-Fa-f]{64}")   # or pass is a raw key: exactly 64 hex digits, no more
+# Seconds the boards that were sent Wi-Fi credentials have to answer them, all of them together,
+# counted from the last write (relay_wifi). A board built with Wi-Fi answers {"ack": true, "wf":
+# "ok"} once it stored them (or forgot the network, for an empty ssid) and {"err": true, "wf": "no"}
+# when it did not (firmware main.cpp, handle_wifi_msg); one built without Wi-Fi has no handler and
+# answers the plain {"err": true}. Its flash write included, a board answers in well under a
+# second; the rest is room for a busy one.
+WIFI_ANSWER_WAIT = 3.5
 CMD_VERB_MAX = 15          # "c" is a short word ("bright", "status"); what it means is the board's
 CMD_VERB = re.compile(r"[A-Za-z0-9_-]{1,%d}" % CMD_VERB_MAX)   # its shape: ASCII letters, digits, - or _
 CMD_VALUE_MAX = 32         # "v", in bytes of UTF-8 (a creature name is at most 23); never cut: a longer one is refused
@@ -141,6 +148,14 @@ STATUS_FIELDS = {
 # keep this many seconds apart; in practice only a same-tick burst (state resend,
 # prompt, notification, page) ever waits.
 WRITE_GAP = 0.25
+# A relay file goes in whole by os.replace over the target, which Windows refuses with
+# PermissionError while another program has the target open (the engine reading a board/ file at
+# that moment, say), and for a moment after it let go: on the dev machine a replace was still
+# refused 30 ms after the reader closed the file. The replace is tried this many times in all,
+# REPLACE_GAP seconds apart, before the error goes to the caller. It blocks the event loop, so the
+# waits between the tries come to a quarter second at most.
+REPLACE_TRIES = 6
+REPLACE_GAP = 0.05
 # One message on the wire: a write without response carries at most the ATT MTU less
 # 3 bytes, and the board keeps at most 511 bytes of it (rx_buf). The boards ask for an
 # MTU of 256 (their NimBLE build config), so 253 is assumed until the link reports one.
@@ -600,10 +615,26 @@ def _note_page(address: str, shown: bool) -> None:
 
 
 def _write_json_atomic(path: Path, obj: dict) -> None:
+    """`obj` into `path` whole: a temp file beside it, then os.replace over it. A replace refused
+    with PermissionError, the target held open by another program for a moment, is tried again,
+    REPLACE_TRIES times in all and REPLACE_GAP seconds apart; then the error goes to the caller, as
+    does any other. The temp file never stays behind a write that failed."""
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
-    tmp.write_text(json.dumps(obj), encoding="utf-8")
-    os.replace(tmp, path)
+    try:
+        tmp.write_text(json.dumps(obj), encoding="utf-8")
+        for tries_left in range(REPLACE_TRIES - 1, -1, -1):
+            try:
+                os.replace(tmp, path)
+                return
+            except PermissionError:
+                if not tries_left:
+                    raise
+                time.sleep(REPLACE_GAP)   # short, and only while a reader holds the file
+    except BaseException:
+        with contextlib.suppress(OSError):
+            tmp.unlink(missing_ok=True)
+        raise
 
 
 def write_heartbeat(connected: bool) -> None:
@@ -1121,6 +1152,9 @@ class Session:
         # board from one link's task, while a board's own write may be under way.
         self._turn = asyncio.Lock()
         self._tx_ok = False  # TX notifies are subscribed: the board's answers can be heard
+        # The board's answer to Wi-Fi credentials, "ok", "refused" or "nack", resolves this while
+        # relay_wifi waits for it (_wf_heard, _on_tx); None the rest of the time.
+        self._wf_answer: asyncio.Future | None = None
         # Album art (ART_CHAR_UUID), all of it per link: a board that links again starts afresh.
         self._art_ok: bool | None = None  # this link takes art; None until it is looked up
         self._art_last: str | None = None  # the newest art id a page took to this board
@@ -1137,9 +1171,11 @@ class Session:
     def _on_tx(self, _char, data: bytearray) -> None:
         """Notifies from the board. Acks are noise; {"approve": id} is an answer, {"btn",
         "scr"} a button press, which goes to events/ for the engine, {"art": id, "ok"} or
-        {"art": id, "miss"} the board's answer about a picture (_art_heard), and {"c": verb, ...}
-        its answer to a cmd (_cmd_heard). The plain {"err": true} may be older firmware turning
-        a cmd down (_nack_heard). Anything else is dropped."""
+        {"art": id, "miss"} the board's answer about a picture (_art_heard), {"c": verb, ...}
+        its answer to a cmd (_cmd_heard), and {"ack": true, "wf": "ok"} or {"err": true, "wf":
+        "no"} its answer to Wi-Fi credentials (_wf_heard). The plain {"err": true} is the answer
+        of a board built without Wi-Fi while credentials wait for one on this link, and otherwise
+        may be older firmware turning a cmd down (_nack_heard). Anything else is dropped."""
         try:
             msg = json.loads(bytes(data).decode("utf-8"))
         except (ValueError, UnicodeDecodeError):
@@ -1155,8 +1191,15 @@ class Session:
         if "c" in msg:
             self._cmd_heard(msg)
             return
+        if "wf" in msg:
+            self._wf_heard(msg)
+            return
         if msg == {"err": True}:
-            self._nack_heard()
+            answer = self._wf_answer
+            if answer is not None and not answer.done():
+                answer.set_result("nack")   # credentials on a board without Wi-Fi: no handler for them
+            else:
+                self._nack_heard()
             return
         request_id = msg.get("approve")
         if request_id is None:
@@ -1217,9 +1260,10 @@ class Session:
         """A plain {"err": true}: what firmware from before the cmd message answers one with (it
         has no handler, and parse_json takes only a message with "s"). Taken as the answer to
         the cmd last sent when that went within CMD_NACK_WAIT and has had no answer yet; the
-        board/ file then says the board takes no cmds. Any other plain nack (credentials on a
-        board without Wi-Fi, a refused art header) is left alone. A board that answers a cmd
-        properly later is marked as taking them again."""
+        board/ file then says the board takes no cmds. Any other plain nack (a refused art
+        header, say) is left alone, and one that comes while Wi-Fi credentials wait for their
+        answer never gets here (_on_tx). A board that answers a cmd properly later is marked as
+        taking them again."""
         waiting, self._cmd_waiting = self._cmd_waiting, None
         if waiting is None or time.monotonic() - waiting[1] > CMD_NACK_WAIT:
             return
@@ -1229,6 +1273,25 @@ class Session:
         self._cmd_ok = False
         self._last = {"c": waiting[0], "err": CMD_OLD_FIRMWARE}
         self._write_report()
+
+    def _wf_heard(self, msg: dict) -> None:
+        """The board's answer to Wi-Fi credentials: {"ack": true, "wf": "ok"} once it stored them
+        (or forgot the network, for an empty ssid), {"err": true, "wf": "no"} when it did not. It
+        settles relay_wifi's wait on this link, as "ok" or "refused". One that comes while no
+        credentials wait for an answer here (after WIFI_ANSWER_WAIT, say), or with any other
+        "wf", gets a log line and changes nothing: the wait it belonged to is over. The answer
+        carries none of the credentials, and no line quotes it anyway."""
+        wf = msg.get("wf")
+        verdict = "ok" if wf == "ok" else "refused" if wf == "no" else None
+        board = self.address or "address unknown"   # TX callbacks run without the link's log tag
+        if verdict is None:
+            log(f"Device sent a Wi-Fi answer of another shape, ignoring ({board})")
+            return
+        answer = self._wf_answer
+        if answer is None or answer.done():
+            log(f"Wi-Fi answer {verdict} came after the wait, ignored ({board})")
+            return
+        answer.set_result(verdict)
 
     def _write_report(self) -> None:
         """board/<address, dashes for colons>.json for the engine: the board's latest status
@@ -1294,7 +1357,8 @@ class Session:
         wire = self._wire_max()
         return (WIRE_MAX_ASSUMED if wire is None else min(wire, ART_CHUNK_MAX)) - 2
 
-    async def write_payload(self, payload: dict, quiet: bool = False, secret: bool = False) -> bool:
+    async def write_payload(self, payload: dict, quiet: bool = False, secret: bool = False,
+                            before=None) -> bool:
         """Write one message to the board. quiet leaves out the "Sending:" log line.
 
         A page, notification or prompt too long for the link is cut to fit (_fit), or
@@ -1304,6 +1368,11 @@ class Session:
         secret (Wi-Fi credentials): nothing of the message reaches the log, and a failed
         write logs only the kind of error, because bleak's WinRT error quotes the bytes it
         could not write. A secret is never cut: one too long for the link is not sent.
+
+        before, when given, is called just ahead of the write itself, in this link's turn and
+        past the write gap. relay_wifi arms its wait for the board's answer there: the board
+        answers its messages in the order they came, so an answer heard from then on is this
+        message's, and the answer to the one before it, which lands during the gap, is not.
         """
         async with self._turn:
             data = _encode(payload)
@@ -1328,6 +1397,8 @@ class Session:
                 await asyncio.sleep(wait)
             if not (quiet or secret):
                 log(f"Sending: {data.decode()}")
+            if before is not None:
+                before()
             try:
                 await self.client.write_gatt_char(RX_CHAR_UUID, data, response=False)
                 return True
@@ -1628,34 +1699,58 @@ async def _wait_first(*events: asyncio.Event, timeout: float) -> None:
 # The sessions whose board link is up right now. With several boards the heartbeat
 # says "connected" and the tray stays Connected while ANY of them is linked.
 _LIVE_LINKS: set = set()
-_WIFI_BUSY = False   # one link is sending the Wi-Fi file to every board right now
-_WIFI_SENT = None    # the stamp of a Wi-Fi file already sent whose removal failed: never sent again
+_WIFI_BUSY = False   # a Wi-Fi file version is going out to the boards, or their answers are awaited
+_WIFI_SENT = None    # the stamp of a version a board stored whose removal failed: never sent again
 _WIFI_UNREAD = None  # the stamp of a Wi-Fi file found unreadable, logged once and read again each tick
+_WIFI_TRIED: tuple | None = None   # (stamp, {board, ...}): the boards one version went to (_wifi_key)
+_WIFI_WAITER: asyncio.Task | None = None   # the task awaiting the answers, held here so it is not collected
+
+
+def _wifi_key(session):
+    """What a board is known by among the ones a Wi-Fi file version went to: its address, which
+    outlives the link, or the link itself when it has none."""
+    return session.address or session
 
 
 async def relay_wifi(seen):
     """One link's turn at the Wi-Fi file; returns the file version this link has now dealt with.
 
     `seen` is the version it dealt with before (_FIRST_TICK on its first tick, so a file
-    that waited for a board goes out as soon as one links). A new version goes out ONCE,
-    as its own message, to every board linked right now, from whichever link comes to it
-    first; the others see it busy and look again next tick. The file is removed as soon
-    as one board took the write. When none did, it waits for the next link. A file that
-    cannot be read right now is not dealt with: the link reads it again next tick, and
-    that is logged once for the version, not on every tick. The credentials live in this
-    call only, and no log line carries any of them.
+    that waited for a board goes out as soon as one links). A version goes out ONCE, as its
+    own message, to every board linked right now that has not had it, from whichever link
+    comes to it first; the others see it busy and look again next tick. A board is known by
+    its address (_WIFI_TRIED), so one that links again is not sent the same version again,
+    while a board that links later gets it.
+
+    The file is removed once a board answered that it stored them. The answers are awaited by
+    a task of their own (_wifi_answers), all of them under the one WIFI_ANSWER_WAIT, so no
+    link's tick waits on them, and _WIFI_BUSY holds every other turn at the file until that task
+    ends. A board built without Wi-Fi answers the plain nack and leaves the file for one that
+    has Wi-Fi; one that refused them, or did not answer in time, leaves it too. A link that
+    cannot hear its board (no TX subscription) has no answer to wait for, so its write counts
+    as stored, as it always has. A write that did not go through counts for nothing: when none
+    went through, the file waits for the next link. A file that cannot be read right now is not
+    dealt with: the link reads it again next tick, and that is logged once for the version, not
+    on every tick. The credentials live in this call only, and no log line carries any of them.
     """
-    global _WIFI_BUSY, _WIFI_SENT, _WIFI_UNREAD
+    global _WIFI_BUSY, _WIFI_SENT, _WIFI_UNREAD, _WIFI_TRIED, _WIFI_WAITER
     stamp = wifi_stamp()
     if stamp is None:
         return None
-    if stamp == _WIFI_SENT:                  # sent already; only its removal is still owed
+    if stamp == _WIFI_SENT:                  # stored already; only its removal is still owed
         if _drop_wifi_file(stamp) is None:
             log("Wi-Fi file removed")
         return stamp
     if stamp == seen or _WIFI_BUSY:
         return seen
+    if _WIFI_TRIED is None or _WIFI_TRIED[0] != stamp:
+        _WIFI_TRIED = (stamp, set())
+    tried = _WIFI_TRIED[1]
+    targets = [s for s in list(_LIVE_LINKS) if _wifi_key(s) not in tried]
+    if not targets:
+        return stamp                         # every board linked now has had it: it waits for another
     _WIFI_BUSY = True
+    handed_on = False                        # _wifi_answers took _WIFI_BUSY over
     try:
         try:
             msg = read_wifi_msg()
@@ -1668,31 +1763,116 @@ async def relay_wifi(seen):
         if msg is None:
             return stamp                     # malformed and logged: waits for a new version
         forget = not msg["wf"]
-        took = 0
-        for session in list(_LIVE_LINKS):
+        loop = asyncio.get_running_loop()
+        heard = []                           # (session, the future its board's answer resolves)
+        deaf = 0                             # writes to links that cannot hear their board
+        for session in targets:
+            # A link that hears its board waits for its answer, armed at the write (write_payload).
+            answer = loop.create_future() if session._tx_ok else None
+
+            def arm(session=session, answer=answer):
+                session._wf_answer = answer
+
             # Each board's own lines carry its own tag, though this runs in another link's task.
             tag = _LOG_TAG.set(f"[{session.address}] ") if _LOG_TAG.get() else None
             try:
-                took += await session.write_payload(msg, secret=True)
+                took = await session.write_payload(msg, secret=True,
+                                                   before=arm if answer is not None else None)
             except Exception as e:           # another board's trouble must not end this link
                 log(f"Write failed: {type(e).__name__}")
+                took = False
             finally:
                 if tag is not None:
                     _LOG_TAG.reset(tag)
+            if not took:
+                if answer is not None:
+                    answer.cancel()
+                    if session._wf_answer is answer:
+                        session._wf_answer = None
+                continue
+            tried.add(_wifi_key(session))
+            if answer is None:
+                deaf += 1
+            else:
+                heard.append((session, answer))
         del msg
-        if not took:
+        if not (heard or deaf):
             log("Wi-Fi credentials reached no board, the file waits for the next link")
             return stamp
-        error = _drop_wifi_file(stamp)
-        note = " (empty ssid: the boards forget the network)" if forget else ""
-        if error is None:
-            log(f"Wi-Fi credentials sent to {took} board(s), file removed{note}")
+        if heard:
+            _WIFI_WAITER = asyncio.ensure_future(_wifi_answers(stamp, forget, deaf, heard))
+            handed_on = True
         else:
-            _WIFI_SENT = stamp
-            log(f"Wi-Fi credentials sent to {took} board(s), file not removed yet{note}: {error}")
+            _wifi_outcome(stamp, forget, deaf, [])
         return stamp
     finally:
+        if not handed_on:
+            _WIFI_BUSY = False
+
+
+async def _wifi_answers(stamp, forget: bool, deaf: int, heard: list) -> None:
+    """relay_wifi's wait for the answers of the boards it can hear, every one of them under the
+    one WIFI_ANSWER_WAIT counted from the last write, then what became of the file
+    (_wifi_outcome). It runs as its own task, so no link's tick waits on it, and _WIFI_BUSY,
+    which relay_wifi handed it, ends with it whatever happens. The daemon stopping cancels the
+    wait, and the file stays."""
+    global _WIFI_BUSY
+    try:
+        await asyncio.wait([answer for _, answer in heard], timeout=WIFI_ANSWER_WAIT)
+        _wifi_outcome(stamp, forget, deaf, [
+            (session, answer.result() if answer.done() and not answer.cancelled() else None)
+            for session, answer in heard])
+    except asyncio.CancelledError:
+        log("Wi-Fi answers no longer awaited, the daemon is stopping: the file stays")
+        raise
+    except Exception as e:                   # never the end of a link
+        log(f"Wi-Fi answers given up: {type(e).__name__}")
+    finally:
+        for session, answer in heard:
+            answer.cancel()                  # nothing for one already answered
+            if session._wf_answer is answer:
+                session._wf_answer = None
         _WIFI_BUSY = False
+
+
+def _wifi_outcome(stamp, forget: bool, deaf: int, answers: list) -> None:
+    """What became of a Wi-Fi file version the boards were sent, in the log: a line for each
+    board that did not store it, with its address, then one line for the file, which goes once
+    a board stored it. `answers` holds (session, "ok", "refused", "nack" or None for no answer
+    in time) for each board that can be heard; `deaf` counts the writes to links that cannot
+    hear their board, which count as stored. A file that changed while the boards answered is
+    left alone: a newer version gets its own turn."""
+    global _WIFI_SENT
+    stored = 0
+    for session, verdict in sorted(answers, key=lambda pair: str(pair[0].address)):
+        board = session.address or "address unknown"
+        if verdict == "ok":
+            stored += 1
+        elif verdict == "refused":
+            log(f"Wi-Fi credentials refused by {board} (its serial log says why)")
+        elif verdict == "nack":
+            log(f"Wi-Fi credentials: {board} has no Wi-Fi (it answered the plain nack)")
+        else:
+            log(f"Wi-Fi credentials: no answer from {board} in {WIFI_ANSWER_WAIT:g} s")
+    note = " (empty ssid: the boards forget the network)" if forget else ""
+    if not (stored or deaf):
+        log(f"Wi-Fi credentials stored by no board, the file waits for a board that has not had it{note}")
+        return
+    parts = []
+    if stored:
+        parts.append(f"stored by {stored} board(s)")
+    if deaf:
+        parts.append(f"sent to {deaf} board(s) that cannot answer")
+    head = "Wi-Fi credentials " + " and ".join(parts)
+    if wifi_stamp() != stamp:                # written again or removed while the boards answered
+        log(f"{head}{note}; the file changed meanwhile and is left alone")
+        return
+    error = _drop_wifi_file(stamp)
+    if error is None:
+        log(f"{head}, file removed{note}")
+    else:
+        _WIFI_SENT = stamp
+        log(f"{head}, file not removed yet{note}: {error}")
 
 
 async def connect_and_run(device, stop_event: asyncio.Event, tray_state=None,
@@ -1855,7 +2035,8 @@ async def connect_and_run(device, stop_event: asyncio.Event, tray_state=None,
                 if await session.write_payload({"pg": ""}):
                     page_sent = {"pg": ""}
                     _note_page(address, False)
-            # Wi-Fi credentials: once to every linked board, then the file goes.
+            # Wi-Fi credentials: once to every linked board that has not had them; the file goes
+            # once a board answered that it stored them (awaited by a task of its own).
             last_wifi = await relay_wifi(last_wifi)
             # Verbs for the boards (cmd/): each file handed to every linked board, then gone;
             # this board's share goes out here, and its answers land in board/ from _on_tx.

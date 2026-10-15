@@ -228,16 +228,20 @@ The tray daemon is the one process that talks to the boards. Other tools, the La
 Engine first among them, reach the boards through small JSON files in
 `%LOCALAPPDATA%\Clawdmeter\`, the same way the approve hook uses `approve.json`. Write each
 file whole in one step: write a temp file in the same folder, then rename it over the target.
-The daemon checks the files every second and sends each change to the boards as its own
-message, never folded into the usage payload. A board holds one incoming message at a time,
-so when several are due in the same second the daemon sends them a quarter second apart.
+The daemon writes its own files the same way. Windows refuses that rename while another
+program has the target open, and for a moment after it lets go, so the daemon tries it
+again, six times in all and a twentieth of a second apart, before it logs the write as
+failed. The daemon checks the files every second and sends each change to the boards as its
+own message, never folded into the usage payload. A board holds one incoming message at a
+time, so when several are due in the same second the daemon sends them a quarter second
+apart.
 
 | File | Written by | Holds | The board gets |
 |------|------------|-------|----------------|
 | `notify.json` | the engine | `{"title", "body", "secs", "expires"}` | `{"nt", "nb", "nx"}` |
 | `page.json` | the engine | `{"pg", "pt", "p1", "p2", "p3", "pp", "pa", "pi", "expires"}` | `{"pg", "pt", "p1", "p2", "p3", "pp", "pa", "pi"}` |
 | `art\<id>.jpg` | the engine | the album picture for a page's `pi`, at most 24 KB | the picture in chunks, when a page names it (see Album art) |
-| `wifi.json` | the engine's `wifi set` and `wifi clear`, or you | `{"ssid", "pass"}` | `{"wf", "wp"}`, once, and the file is deleted |
+| `wifi.json` | the engine's `wifi set` and `wifi clear`, or you | `{"ssid", "pass"}` | `{"wf", "wp"}`, once to each board, and the file is deleted once a board answers that it stored them (see Wi-Fi) |
 | `cmd\<ns>.json` | the engine | `{"c", "v", "expires"}`, one verb for the boards | `{"c", "v"}`, once, in name order, and the file is deleted (see Commands) |
 | `events\<ns>.json` | the daemon | `{"btn", "scr", "addr", "ts"}` | nothing: it is for the engine |
 | `board\<address>.json` | the daemon | `{"br", "scr", "an", "fw", "n", "dv", "do"}` from the board's report, with `{"cmd", "last", "ts", "addr", "name"}` | nothing: it is the board's answers, for the engine |
@@ -328,14 +332,25 @@ LabDaemon Engine. In its folder:
 Without the engine, write the file yourself, whole as above, as `{"ssid": "...", "pass": "..."}`:
 the `ssid` at most 32 bytes of `UTF-8`, the `pass` 8 to 63 bytes or a raw key of exactly 64
 hex digits, and an empty `pass` for an open network. The daemon sends it once, as
-`{"wf", "wp"}`, to every board linked at that moment, waiting for a link if there is none, and
-then deletes the file. Its log says how many boards took it and never shows the password.
-Taking the write is not keeping it: a board built without Wi-Fi takes it and drops it, so write
-the file while the 4 inch board shows Connected. A file it cannot use is logged without its
-content and left for you to fix. A file it cannot open yet, because another program has it
-open, is logged once and read again every second until it opens. Each board keeps the
-credentials in its own flash, so the file is needed once, not at every start. A board that
-links after the file is gone does not get it: write the file again for that board.
+`{"wf", "wp"}`, to every board linked at that moment, waiting for a link if there is none.
+Each board answers: `{"ack": true, "wf": "ok"}` when it stored them (or forgot the network,
+for an empty `ssid`), `{"err": true, "wf": "no"}` when it did not, and a board built without
+Wi-Fi, which has no use for them, the plain `{"err": true}`. The daemon waits 3.5 seconds for
+the answers, one wait for all the boards, in a task of its own, so nothing else the daemon
+does waits on it. The file is deleted once a board answered that it stored them. Until then it
+stays, so writing it while only a board without Wi-Fi is linked is fine: it waits for the 4
+inch board. A board that answered without storing them, or did not answer in time, is not
+sent that file again, even when it links again, while a board that links later and has not
+had it gets it. Write the file again to send it again to a board that missed it. A link that
+cannot hear its board's answers (the log says `TX subscription unavailable` when it links)
+has no answer to wait for, so its write counts as stored, as it always did. An answer that
+comes after the wait only goes in the log. The log names each board that did not store them
+and why, then says what became of the file, and never shows the network name or the
+password. A file it cannot use is logged without its content and left for you to fix. A file
+it cannot open yet, because another program has it open, is logged once and read again every
+second until it opens. Each board keeps the credentials in its own flash, so the file is
+needed once, not at every start. A board that links after the file is gone does not get it:
+write the file again for that board.
 
 **Commands.** A file in `cmd` is one named verb for the boards, `{"c": verb, "v": value,
 "expires"}`, written whole like the others under a name that sorts in the order the verbs

@@ -8,8 +8,10 @@ Run: python -m pytest daemon/tests/test_windows_relay.py -x -q
 """
 import asyncio
 import json
+import os
 import sys
 import time
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -25,6 +27,14 @@ CLOCK_SLACK = 0.04
 # A JSON integer too long for a float, well inside Python's 4300 digit parse limit.
 BIG = "1" + "0" * 400
 BOARD = "E8:3D:C1:F7:6F:21"
+
+
+@pytest.fixture(autouse=True)
+def wifi_answers(monkeypatch):
+    """The boards a Wi-Fi file version went to, and the task awaiting their answers, start afresh
+    in every test, as conftest does for the rest of the relay state."""
+    monkeypatch.setattr(mod, "_WIFI_TRIED", None)
+    monkeypatch.setattr(mod, "_WIFI_WAITER", None)
 
 
 @pytest.fixture
@@ -60,16 +70,38 @@ async def until(cond, timeout=5.0):
         await asyncio.sleep(0.01)
 
 
+WF_OK = {"ack": True, "wf": "ok"}   # a board built with Wi-Fi stored the credentials (firmware main.cpp)
+
+
+def _answering(client, write):
+    """The board behind `client` answers Wi-Fi credentials the way a board built with Wi-Fi does:
+    on TX, just after the write, with WF_OK. A write that raised reached no board, so it gets no
+    answer. The TX callback is the one connect_and_run subscribes with start_notify."""
+    subscribed = {}
+
+    async def subscribe(uuid, callback):
+        subscribed[uuid] = callback
+
+    async def write_and_answer(uuid, data, response=False):
+        await write(uuid, data, response=response)
+        tx = subscribed.get(mod.TX_CHAR_UUID)
+        if uuid == mod.RX_CHAR_UUID and tx is not None and "wf" in json.loads(bytes(data)):
+            asyncio.get_running_loop().call_soon(tx, None, bytearray(json.dumps(WF_OK).encode()))
+
+    client.start_notify = AsyncMock(side_effect=subscribe)
+    client.write_gatt_char = write_and_answer
+
+
 def _drive(write, scenario, device=None):
     """Run connect_and_run against a fake board while `scenario(stop_event)` acts on the files.
 
-    `device` names the board (a MagicMock with .address); by default it has no address."""
+    `device` names the board (a MagicMock with .address); by default it has no address. The board
+    answers Wi-Fi credentials that reached it as one built with Wi-Fi does (_answering)."""
     client = AsyncMock()
     client.connect = AsyncMock(return_value=None)
     client.is_connected = True
     client.disconnect = AsyncMock()
-    client.start_notify = AsyncMock()
-    client.write_gatt_char = write
+    _answering(client, write)
 
     async def run():
         stop_event = asyncio.Event()
@@ -827,10 +859,11 @@ def test_an_event_write_failure_is_logged_not_raised(relay_files, logs):
 
 
 # ---------------------------------------------------------------------------
-# wifi.json: credentials to every linked board, once, then the file goes
+# wifi.json: credentials to every linked board, once, and the file goes once a board stored them
+# (the answers themselves: test_windows_wifi_answer.py)
 # ---------------------------------------------------------------------------
 
-SSID = "Echo Lab 5G"
+SSID = "Echo Lab 5G"                  # no log line may hold the network name either
 SECRET = "hunter2-SENTINEL-9f3a"      # no log line may hold it, or its SENTINEL core
 CREDENTIALS = {"wf": SSID, "wp": SECRET}
 BOARD_B = "D4:05:92:B7:8B:E2"
@@ -841,7 +874,7 @@ KEY = "0123456789abcdef" * 4                  # a raw WPA key: exactly 64 hex di
 
 
 def _leaks(lines):
-    return [line for line in lines if "SENTINEL" in line]
+    return [line for line in lines if "SENTINEL" in line or SSID in line]
 
 
 def _refusal(data):
@@ -1035,7 +1068,8 @@ def test_an_unreadable_wifi_file_is_read_again_each_tick_and_logged_once(relay_f
     assert sent == [] and wifi.exists() and not mod._WIFI_BUSY
     assert asyncio.run(mod.relay_wifi(mod._FIRST_TICK)) == second   # let go: sent, and it goes
     assert [json.loads(data) for data in sent] == [{"wf": SSID, "wp": SECRET + "2"}]
-    assert logs[-1] == "Wi-Fi credentials sent to 1 board(s), file removed"
+    # This link has no TX subscription, so the write counts as stored (relay_wifi).
+    assert logs[-1] == "Wi-Fi credentials sent to 1 board(s) that cannot answer, file removed"
     assert not wifi.exists() and not mod._WIFI_BUSY
     assert not _leaks(logs)
 
@@ -1075,7 +1109,10 @@ def test_a_secret_too_long_for_the_link_is_neither_cut_nor_sent(logs):
     assert logs == ["A secret message does not fit the link (37), not sent"]
 
 
-# connect_and_run: once to the board, then the file goes
+# connect_and_run: once to the board, and the file goes once it answered that it stored them
+
+STORED = "Wi-Fi credentials stored by 1 board(s), file removed"
+
 
 def test_credentials_go_to_the_board_once_and_the_file_goes(relay_files, logs, fast):
     wifi = relay_files / "wifi.json"
@@ -1091,8 +1128,8 @@ def test_credentials_go_to_the_board_once_and_the_file_goes(relay_files, logs, f
 
     _drive(write, scenario)
     assert sent == [USAGE, CREDENTIALS, {"wf": "Other net", "wp": "other pass"}]
-    assert logs.count("Wi-Fi credentials sent to 1 board(s), file removed") == 2
-    assert not any("other pass" in line for line in logs)
+    assert logs.count(STORED) == 2
+    assert not any("other pass" in line or "Other net" in line for line in logs)
     assert not _leaks(logs)
 
 
@@ -1103,7 +1140,7 @@ def test_credentials_waiting_before_the_link_go_out_on_its_first_tick(relay_file
     sent, _, write = _recorder()
 
     async def scenario(stop_event):
-        await until(lambda: len(sent) == 2)
+        await until(lambda: len(sent) == 2 and not wifi.exists())
 
     _drive(write, scenario)
     assert sent == [CREDENTIALS, USAGE]
@@ -1117,13 +1154,12 @@ def test_an_empty_ssid_goes_out_as_a_clear_and_the_file_goes(relay_files, logs, 
     sent, _, write = _recorder()
 
     async def scenario(stop_event):
-        await until(lambda: len(sent) == 2)
+        await until(lambda: len(sent) == 2 and not wifi.exists())
 
     _drive(write, scenario)
     assert sent == [{"wf": ""}, USAGE]
     assert not wifi.exists()
-    assert ("Wi-Fi credentials sent to 1 board(s), file removed"
-            " (empty ssid: the boards forget the network)") in logs
+    assert f"{STORED} (empty ssid: the boards forget the network)" in logs
 
 
 def test_a_raw_key_goes_to_the_board_and_the_file_goes(relay_files, logs, fast):
@@ -1133,12 +1169,12 @@ def test_a_raw_key_goes_to_the_board_and_the_file_goes(relay_files, logs, fast):
     sent, _, write = _recorder()
 
     async def scenario(stop_event):
-        await until(lambda: len(sent) == 2)
+        await until(lambda: len(sent) == 2 and not wifi.exists())
 
     _drive(write, scenario)
     assert sent == [{"wf": "s" * 32, "wp": KEY}, USAGE]
     assert not wifi.exists()
-    assert "Wi-Fi credentials sent to 1 board(s), file removed" in logs
+    assert STORED in logs
     assert not any(KEY in line for line in logs)
 
 
@@ -1165,11 +1201,13 @@ def test_credentials_no_board_took_wait_for_the_next_link(relay_files, logs, fas
     again, _, write = _recorder()                           # the board links again: now it goes
 
     async def scenario2(stop_event):
-        await until(lambda: len(again) == 2)
+        await until(lambda: len(again) == 2 and not wifi.exists())
 
     _drive(write, scenario2)
     assert again == [CREDENTIALS, USAGE]
     assert not wifi.exists()
+    assert STORED in logs
+    assert not _leaks(logs)
 
 
 def test_a_malformed_wifi_file_is_not_sent_and_is_logged_once(relay_files, logs, fast):
@@ -1212,7 +1250,7 @@ def test_credentials_whose_file_will_not_go_are_never_sent_again(relay_files, lo
     _drive(write, scenario)
     assert _wf(sent) == [CREDENTIALS]
     assert len(refusals) == 3
-    assert "Wi-Fi credentials sent to 1 board(s), file not removed yet: The file is in use" in logs
+    assert "Wi-Fi credentials stored by 1 board(s), file not removed yet: The file is in use" in logs
     assert logs.count("Wi-Fi file removed") == 1
     assert not _leaks(logs)
 
@@ -1232,7 +1270,7 @@ def test_credentials_held_open_for_a_moment_go_out_once_it_is_let_go(relay_files
     assert _wf(sent) == [CREDENTIALS]
     assert len(refusals) == 3
     assert logs.count(UNREADABLE) == 1
-    assert "Wi-Fi credentials sent to 1 board(s), file removed" in logs
+    assert STORED in logs
     assert not _leaks(logs)
 
 
@@ -1270,7 +1308,7 @@ def test_credentials_under_a_real_share_lock_go_out_once_it_is_released(relay_fi
             kernel32.CloseHandle(h)
     assert _wf(sent) == [CREDENTIALS]
     assert logs.count(UNREADABLE) == 1
-    assert "Wi-Fi credentials sent to 1 board(s), file removed" in logs
+    assert STORED in logs
     assert not _leaks(logs)
 
 
@@ -1291,15 +1329,15 @@ def _slow_board():
 
 def _drive_boards(writes, scenario):
     """connect_and_run for each board in `writes` (address: its write_gatt_char), all at
-    once, while `scenario(stop_event)` acts on the files."""
+    once, while `scenario(stop_event)` acts on the files. Each board answers Wi-Fi credentials
+    that reached it as one built with Wi-Fi does (_answering)."""
     clients = {}
     for address, write in writes.items():
         client = AsyncMock()
         client.connect = AsyncMock(return_value=None)
         client.is_connected = True
         client.disconnect = AsyncMock()
-        client.start_notify = AsyncMock()
-        client.write_gatt_char = write
+        _answering(client, write)
         clients[address] = client
 
     async def run():
@@ -1342,7 +1380,7 @@ def test_every_linked_board_gets_the_credentials_once(relay_files, logs, fast, m
     _drive_boards({BOARD: a_write, BOARD_B: b_write}, scenario)
     assert _wf(a_sent) == [CREDENTIALS] and _wf(b_sent) == [CREDENTIALS]
     assert any(busy_seen)                                   # the other link did come by mid send
-    assert logs.count("Wi-Fi credentials sent to 2 board(s), file removed") == 1
+    assert logs.count("Wi-Fi credentials stored by 2 board(s), file removed") == 1
     assert not _leaks(logs)
 
 
@@ -1363,7 +1401,7 @@ def test_one_board_taking_the_credentials_is_enough_to_remove_the_file(relay_fil
 
     _drive_boards({BOARD: a_write, BOARD_B: b_write}, scenario)
     assert _wf(a_sent) == [CREDENTIALS] and _wf(b_sent) == []
-    assert "Wi-Fi credentials sent to 1 board(s), file removed" in logs
+    assert STORED in logs
     assert "Write failed: BleakError" in logs
     assert not _leaks(logs)
 
@@ -1394,7 +1432,8 @@ def test_each_board_s_trouble_is_logged_under_its_own_tag(relay_files, monkeypat
     assert [json.loads(data) for data in good_sent] == [CREDENTIALS]
     assert f"[{BOARD_B}] Write failed: BleakError" in lines
     assert "[C0:FF:EE:00:00:01] Write failed: RuntimeError" in lines
-    assert f"[{BOARD}] Wi-Fi credentials sent to 1 board(s), file removed" in lines
+    # The good link has no TX subscription here, so its write counts as stored (relay_wifi).
+    assert f"[{BOARD}] Wi-Fi credentials sent to 1 board(s) that cannot answer, file removed" in lines
     assert not (relay_files / "wifi.json").exists()
     assert not _leaks(lines)
 
@@ -1405,3 +1444,96 @@ def test_a_link_that_finds_the_send_under_way_keeps_its_place(relay_files, logs,
     assert asyncio.run(mod.relay_wifi(mod._FIRST_TICK)) is mod._FIRST_TICK   # looks again next tick
     assert (relay_files / "wifi.json").exists()
     assert logs == []
+
+
+# ---------------------------------------------------------------------------
+# The daemon's own writes: a replace refused for a moment is tried again
+# ---------------------------------------------------------------------------
+
+REPORT_FILE = "E8-3D-C1-F7-6F-21.json"   # board/ names BOARD's report this way
+
+
+def _refused_replace(monkeypatch, target, times=None, error=None):
+    """os.replace onto `target` fails for its first `times` calls (every call for None), with
+    PermissionError unless `error` says otherwise: what Windows answers a rename over a file that
+    another program has open, the engine reading a board report, say. Every other replace is the
+    real one, since the module's os is the os module. The calls onto `target` are timed in the
+    list returned."""
+    real = os.replace
+    calls = []
+
+    def replace(src, dst, *args, **kwargs):
+        if Path(dst) == target:
+            calls.append(time.monotonic())
+            if times is None or len(calls) <= times:
+                raise error or PermissionError(13, "Access is denied")
+        return real(src, dst, *args, **kwargs)
+
+    monkeypatch.setattr(mod.os, "replace", replace)
+    return calls
+
+
+def _temp_files(folder):
+    return [name for name in os.listdir(folder) if name.endswith(".tmp")] if folder.exists() else []
+
+
+def test_the_tries_stay_short_on_the_event_loop():
+    """They block the event loop: the waits between them stay at a quarter second."""
+    assert mod.REPLACE_TRIES > 1
+    assert (mod.REPLACE_TRIES - 1) * mod.REPLACE_GAP <= 0.25 + 1e-9
+
+
+def test_a_replace_refused_twice_then_let_go_still_writes_the_board_report(relay_files, logs, monkeypatch):
+    """The engine had board/<address>.json open for a moment: the report is not lost."""
+    target = relay_files / "board" / REPORT_FILE
+    calls = _refused_replace(monkeypatch, target, times=2)
+    mod.Session(MagicMock(), BOARD)._on_tx(None, bytearray(b'{"c":"bright","ok":1}'))
+    assert len(calls) == 3
+    report = json.loads(target.read_text(encoding="utf-8"))
+    assert report["cmd"] is True and report["last"] == {"c": "bright", "ok": 1}
+    assert not any("write failed" in line for line in logs)
+    assert _temp_files(target.parent) == []
+    assert calls[2] - calls[0] >= 2 * mod.REPLACE_GAP - CLOCK_SLACK    # a pause between the tries
+
+
+def test_a_replace_refused_every_time_ends_in_the_report_s_log_line(relay_files, logs, monkeypatch):
+    """After REPLACE_TRIES the error goes where it always went: _write_report logs it and goes
+    on. The report before stays whole, and no temp file is left behind."""
+    target = relay_files / "board" / REPORT_FILE
+    _write(target, {"cmd": True, "last": {"c": "status", "ok": 1}})
+    calls = _refused_replace(monkeypatch, target)
+    started = time.monotonic()
+    mod.Session(MagicMock(), BOARD)._on_tx(None, bytearray(b'{"c":"bright","ok":1}'))
+    assert time.monotonic() - started < 0.5
+    assert len(calls) == mod.REPLACE_TRIES
+    assert [line for line in logs if line.startswith("Board report write failed")] == \
+        ["Board report write failed: [Errno 13] Access is denied"]
+    assert json.loads(target.read_text(encoding="utf-8"))["last"] == {"c": "status", "ok": 1}
+    assert _temp_files(target.parent) == []
+
+
+def test_a_heartbeat_refused_every_time_is_logged_as_before(relay_files, logs, monkeypatch):
+    calls = _refused_replace(monkeypatch, relay_files / "daemon.heartbeat")
+    mod.write_heartbeat(True)
+    assert len(calls) == mod.REPLACE_TRIES
+    assert logs == ["Heartbeat write failed: [Errno 13] Access is denied"]
+    assert _temp_files(relay_files) == []
+
+
+def test_the_write_raises_the_last_refusal_after_its_tries(relay_files, monkeypatch):
+    target = relay_files / "x.json"
+    calls = _refused_replace(monkeypatch, target)
+    with pytest.raises(PermissionError):
+        mod._write_json_atomic(target, {"a": 1})
+    assert len(calls) == mod.REPLACE_TRIES and not target.exists()
+    assert _temp_files(relay_files) == []
+
+
+def test_any_other_replace_error_is_not_tried_again(relay_files, logs, monkeypatch):
+    target = relay_files / "board" / REPORT_FILE
+    calls = _refused_replace(monkeypatch, target, error=OSError(28, "No space left on device"))
+    mod.Session(MagicMock(), BOARD)._on_tx(None, bytearray(b'{"c":"bright","ok":1}'))
+    assert len(calls) == 1
+    assert [line for line in logs if line.startswith("Board report write failed")] == \
+        ["Board report write failed: [Errno 28] No space left on device"]
+    assert _temp_files(target.parent) == []
