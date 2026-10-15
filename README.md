@@ -358,9 +358,25 @@ Album art, on the 4 inch board only: `pi` names a picture, 8 to 16 characters of
 
 Status as of 2026-10-02: flashed on both the firmware and daemon sides (firmware `efd5f1f`, daemon `4ab5e74`), not yet confirmed end to end. The first run is blocked on a Windows Bluetooth re-pair, since the cached GATT table hides the new characteristic.
 
-Wi-Fi reaches the board over serial (above) or over BLE, as its own message: `{"wf": ssid, "wp": password}`, the SSID 1 to 32 bytes and the password empty for an open network, 8 to 63 characters, or exactly 64 hex digits; `{"wf": ""}` forgets the network. The board answers `{"ack":true,"wf":"ok"}` when it stored or forgot them and `{"err":true,"wf":"no"}` when it did not; a board built without Wi-Fi answers the plain `{"err":true}`. From the PC, `python -m labdaemon_engine wifi set "<ssid>"` asks for the password without echoing it and writes `wifi.json` into `%LOCALAPPDATA%\Clawdmeter`, and `wifi clear` writes the forget. The tray sends the file once to the connected boards and deletes it after a write succeeds, so a board without Wi-Fi can use it up: run `wifi set` while the 4 inch board shows Connected. A follow-up will make the tray wait for the `wf` answer.
+Wi-Fi reaches the board over serial (above) or over BLE, as its own message: `{"wf": ssid, "wp": password}`, the SSID 1 to 32 bytes and the password empty for an open network, 8 to 63 characters, or exactly 64 hex digits; `{"wf": ""}` forgets the network. The board answers `{"ack":true,"wf":"ok"}` when it stored or forgot them and `{"err":true,"wf":"no"}` when it did not; a board built without Wi-Fi answers the plain `{"err":true}`. From the PC, `python -m labdaemon_engine wifi set "<ssid>"` asks for the password without echoing it and writes `wifi.json` into `%LOCALAPPDATA%\Clawdmeter`, and `wifi clear` writes the forget. The tray sends the file once to each connected board and deletes it only once a board answered `"wf":"ok"`, waiting 3.5 s for the answers; a board without Wi-Fi leaves it for one that has Wi-Fi, so the 4 inch board still gets the credentials when it connects after `wifi set` ran while only another board was connected.
 
 The host side is [LabDaemon Engine](https://github.com/ChalulaBottle/labdaemon-engine) (private), which writes `notify.json` and `page.json` into `%LOCALAPPDATA%\Clawdmeter` for the tray daemon to relay, the same way it relays `approve.json`.
+
+### Commands from the host (ECHO edition)
+
+A command is a named verb, `{"c": verb, "v": value}`, its own BLE message like a notification or a page, one verb a message. The value is always text; a number there reads as empty, which the verbs that need one refuse. The board answers each one on TX in place of the plain ack: `{"c": verb, "ok": 1}` when it did it, `{"c": verb, "err": why}` when it did not, and for `status` its report. Firmware from before the commands has no handler for them and answers the plain `{"err":true}`.
+
+| Verb | Value | What the board does | Refused with |
+|---|---|---|---|
+| `bright` | 0 to 100, in digits | sets the panel brightness and keeps it in NVS; 0 is dim, never black | `value`; `no` on a board whose brightness cannot be set (`fixed_brightness`) |
+| `anim` | a creature name, or empty | holds that creature on the splash, with no rotation, until another hold, an empty one or the creature button at the desk | `name` when the board's table has no creature of that name |
+| `screen` | `splash`, `usage` or `page` | puts that screen on top; `page` brings the live page back | `no page` while no page is live, `value` for any other name |
+| `dance` | `next` | the next dancer of a dancing page | `no dance` while no page dances, `value` |
+| `dview` | `card`, `large` or `full` | the dance view, kept in NVS (default `large`) | `value`; `no` for `large` or `full` on a board without PSRAM |
+| `dvo` | 0 to 100 | the full view's strip opacity, kept in NVS (default 55) | `value`; `no` on a board without PSRAM |
+| `status` | empty | answers with its report instead of an ok | never |
+
+Any other verb is answered `{"c": verb, "err": "verb"}`, the verb named back as it came when it is a word of a to z of up to 15 letters, and as `"?"` when it is not. A verb the board carried out lights a dark panel, so the change is seen; `status` is only a look and leaves a dark panel dark. The report is `{"c":"status","br","scr","an","fw","n","dv","do"}`, within one TX notification: `br` the brightness from 0 to 100 (-1 where it cannot be set), `scr` the screen on top, `an` the creature on the splash (its name cut from the end when the whole would not fit), `fw` the board's name, `n` how many animations its table has, `dv` the view a dancing page gets (`card` on a board without PSRAM) and `do` the overlay opacity. The serial console runs the same verbs as `cmd <verb> <value>`, the value being the rest of the line (`cmd anim echo dj`, `cmd status`), and its answer goes to a linked host too. On the PC the engine's board controller drops `cmd\<ns>.json` files for the tray to relay, and the tray keeps each board's answers in `board\<address>.json` (`daemon/README-windows.md`, Commands).
 
 ### Make the creature follow Claude
 
