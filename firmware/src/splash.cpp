@@ -45,8 +45,8 @@ static bool active = false;
 // While splash is showing, auto-cycle to another animation after a random
 // stretch between these two bounds (a fixed beat made the rotation feel like
 // a playlist on repeat).
-#define SPLASH_ROTATE_MIN_MS 14000
-#define SPLASH_ROTATE_MAX_MS 32000
+#define SPLASH_ROTATE_MIN_MS 6000    // operator 2026-10-17: change more often (was 14 to 32 s)
+#define SPLASH_ROTATE_MAX_MS 14000
 static uint32_t rotate_after_ms = SPLASH_ROTATE_MIN_MS;
 
 // Usage-rate animation groups: 4 groups × up to 14 animations each.
