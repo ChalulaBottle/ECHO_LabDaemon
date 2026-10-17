@@ -187,6 +187,30 @@ footer p{font-size:14px;color:var(--muted);max-width:76ch}
   </main>
 </section>
 
+<!-- Band 4a, dark: the music video on the dashboard. Plain text only: no bold, no coloured words. -->
+<section class="band dark" id="music-video">
+  <main class="two">
+    <div>
+      <p class="kick" style="color:var(--muted);font-weight:400">LabDaemon Engine · Dashboard · October 2026</p>
+      <h2 style="font-weight:400">The video for the song</h2>
+      <p>While Spotify plays, the dashboard's Now playing panel plays that track's music video from YouTube, muted, so Spotify keeps the sound. It starts when music starts, pauses when Spotify pauses, and Hide video turns it off. The board itself keeps the dancing creature; it cannot play YouTube.</p>
+      <p class="muted">Why YouTube and not Spotify: Spotify's public API has no video or Canvas access, and the only way in breaks Spotify's developer terms. The engine searches YouTube for the official video, keeps five that allow playback outside YouTube, skips any a label still refuses, and looks each track up once.</p>
+      <h3 style="font-weight:400;margin-top:22px">Set it up once</h3>
+      <ol class="muted" style="padding-left:20px;margin:0 0 12px">
+        <li>In the Google Cloud console, pick or create a project, open APIs and Services, then Library, and enable the YouTube Data API v3. Enabling it accepts the YouTube API Services terms.</li>
+        <li>Open Credentials, then Create credentials, then API key. Under API restrictions select only YouTube Data API v3; leave application restrictions at None. Create it.</li>
+        <li>In a PowerShell window, from the engine's folder, run <code>.\.venv\Scripts\python.exe -m labdaemon_engine youtube key</code> and paste the key at the hidden prompt. It is stored encrypted to your Windows account. Never paste a key into a chat.</li>
+        <li>Open the dashboard with <code>python -m labdaemon_engine dashboard</code> and play a song. The video appears under the track.</li>
+      </ol>
+      <p class="muted">Limits: a search costs 100 of the 10,000 daily units a free key gets, so the engine caps itself at 80 new tracks a day and caches every answer. Videos with intros run a few seconds off the audio. Songs without a real video play YouTube's still image upload of the cover.</p>
+    </div>
+    <figure class="media">
+      <img src="media/music-video-panel.png" width="472" height="615" style="image-rendering:auto" alt="A dark dashboard panel titled Now playing with track controls and a Hide video button, above a 16 by 9 video frame showing a man in a red shirt at a laptop, and a grey line reading From YouTube.">
+      <figcaption style="font-weight:400">Test capture, October 16, 2026: a stand in track, and Google's own developer demo video standing in for a music video.</figcaption>
+    </figure>
+  </main>
+</section>
+
 <!-- Band 4b, work: creatures in the works. Stills are frame 0 of each animation; motion lives on the bench. -->
 <section class="band work">
   <main>
