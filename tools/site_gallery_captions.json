@@ -1,0 +1,442 @@
+{
+ "echo_coffee": [
+  "The ECHO creature with its own mug: steam at rest, an antenna ping, a sip.",
+  "The ECHO creature holding a steaming mug"
+ ],
+ "echo_double_coffee": [
+  "Some days it is two mugs. Steam off both, alternating sips, a quicker antenna.",
+  "The ECHO creature holding two mugs"
+ ],
+ "echo_pizza": [
+  "A slice lifted to the visor, three bites down to the crust, happy eyes, a new slice.",
+  "The ECHO creature eating a slice of pizza"
+ ],
+ "echo_mushroom": [
+  "A spotted toadstool hops into its mouth, three chews, then the eyes pop wide and a grin opens.",
+  "The ECHO creature eating a spotted toadstool"
+ ],
+ "echo_mushroom_b": [
+  "The toadstool on a 30 cell lattice: the creature smaller so the sky can fill the panel.",
+  "The ECHO creature small under a wide sky beside a red mushroom"
+ ],
+ "echo_mushroom_hd_b": [
+  "The toadstool redrawn fine at 8 px cells, ending in a sky bloom.",
+  "The ECHO creature in high detail beside a red toadstool as the sky blooms"
+ ],
+ "echo_blink": [
+  "Long rests, a single blink, a slow double blink, a glance down between them.",
+  "The ECHO creature blinking"
+ ],
+ "echo_breath": [
+  "The torso rises a row on the in breath and the visor lifts at the top, then settles.",
+  "The ECHO creature breathing"
+ ],
+ "echo_glance": [
+  "The eyes slide left and hold, back, right and hold, then down with a ping.",
+  "The ECHO creature glancing left and right"
+ ],
+ "echo_doze": [
+  "Eyes to lines, the torso sinks, z cells rise off the antenna with a slow snore bob.",
+  "The ECHO creature dozing with z cells rising"
+ ],
+ "echo_done": [
+  "A check mark draws itself over the head stroke by stroke, the eyes go happy, the check flashes.",
+  "The ECHO creature under a check mark"
+ ],
+ "echo_winky": [
+  "The right eye closes to a line and a small star sparkles off it.",
+  "The ECHO creature winking with a sparkle"
+ ],
+ "echo_ask": [
+  "Waiting for a yes: a question mark blinks over the head, a small patient bob.",
+  "The ECHO creature under a question mark"
+ ],
+ "echo_morning": [
+  "Holding a mug and waking up: shut, half open, back under, open, a sip, steam curling off.",
+  "The ECHO creature waking up with a mug"
+ ],
+ "echo_nanoclaw": [
+  "The nano claw: a tiny red crab runs the crab route at speed while the eyes try to keep up.",
+  "The ECHO creature watching a tiny red crab"
+ ],
+ "echo_cartwheel": [
+  "The creature shrinks to its mini and cartwheels off the right edge, then glitches back in, happy.",
+  "A small ECHO creature cartwheeling"
+ ],
+ "echo_dj": [
+  "In a headset behind a deck: two platters, a scratch every fourth beat, an equaliser, lasers from the corners.",
+  "The ECHO creature as a DJ behind a deck"
+ ],
+ "echo_startle": [
+  "A two row jump with wide eyes, an exclamation mark, a wobbly landing and a blink.",
+  "The ECHO creature jumping in surprise"
+ ],
+ "echo_hop": [
+  "Hops on the beat with arms up in the air, a happy squint on the fourth hop.",
+  "The ECHO creature hopping"
+ ],
+ "echo_sway_2": [
+  "The torso swings left and right over planted legs, the eyes leading each swing.",
+  "The ECHO creature swinging side to side"
+ ],
+ "echo_high_five": [
+  "Two minis walk in from the sides and high five with a flash and sparks.",
+  "Two small ECHO creatures high fiving"
+ ],
+ "echo_catch": [
+  "Two minis play catch, a glowing ball arcing between them.",
+  "Two small ECHO creatures playing catch"
+ ],
+ "echo_rave": [
+  "Headset on, swaying, two spotlight cones sweep behind it and cross on the beat.",
+  "The ECHO creature under crossing spotlights"
+ ],
+ "echo_mixer": [
+  "A mixing desk: six faders ride up and down in waves, the head nods on the beat.",
+  "The ECHO creature at a mixing desk"
+ ],
+ "echo_code": [
+  "A laptop in front, code lines scrolling, hands tapping, a ping every few lines.",
+  "The ECHO creature coding on a laptop"
+ ],
+ "echo_notes": [
+  "A notepad at the chest, lines of writing appear as a magenta pen tip runs along each.",
+  "The ECHO creature writing on a notepad"
+ ],
+ "echo_think_spin": [
+  "Thinking: both eyes roll round their corners of the visor while it breathes.",
+  "The ECHO creature with rolling eyes"
+ ],
+ "echo_think_deep": [
+  "Deep thinking: the visor goes dark so the eyes can glow, a new colour every turn.",
+  "The ECHO creature with glowing eyes on a dark visor"
+ ],
+ "echo_work": [
+  "Seated at a desk, typing in bursts, every press flicking the visor.",
+  "The ECHO creature typing at a desk"
+ ],
+ "echo_write": [
+  "A cursor types three lines on a small page beside it, then the page clears.",
+  "The ECHO creature beside a page being typed"
+ ],
+ "echo_read": [
+  "The eyes step across the visor line by line, a blink turns the page.",
+  "The ECHO creature reading"
+ ],
+ "fable_gaze": [
+  "The quieter Fable: its four sideways eyes close into a line and drift as a group.",
+  "The Fable creature with four eyes drifting"
+ ],
+ "echo_ponder": [
+  "A hand to the chin, eyes up, three dots rising over the head one at a time.",
+  "The ECHO creature pondering"
+ ],
+ "echo_bubble": [
+  "A thought bubble puffs out beside the antenna and a little amber bulb lights inside.",
+  "The ECHO creature with a thought bubble and a bulb"
+ ],
+ "echo_summon_hd": [
+  "The summon ritual at 8 px cells: a double ring, five points, a rune on each lighting in turn.",
+  "The ECHO creature in high detail inside a summoning ring"
+ ],
+ "ultra_braille": [
+  "Ultracode as a large rotating sphere of braille dots, the creature wearing its colours in and out.",
+  "A rotating sphere of braille dots"
+ ],
+ "fable_eyes": [
+  "Each blink swaps in a new set of eyes on the Fable visor.",
+  "The Fable creature with changing eyes"
+ ],
+ "echo_portal": [
+  "The Island's portal jump: it heaves a hatch open, a magenta shaft floods up, it hops in.",
+  "The ECHO creature jumping into a glowing hatch"
+ ],
+ "echo_build": [
+  "The boot creature: it builds itself out of black in braille, dot by dot from the antenna down.",
+  "The ECHO creature assembling from braille dots"
+ ],
+ "echo_door": [
+  "Island crossplay: it walks through a purple door into magenta light and is gone.",
+  "The ECHO creature stepping through a purple door"
+ ],
+ "mode_opus_enter": [
+  "When Opus takes over: fast pings, the visor charges to white, a halo flashes.",
+  "The ECHO creature powering up"
+ ],
+ "mode_opus_work": [
+  "Opus at rest: a brighter body, a slow visor pulse, an antenna ping every 3 s.",
+  "The brighter Opus creature at rest"
+ ],
+ "mode_ultracode_enter": [
+  "When ultracode starts: three widening glitch splits, then it echoes into three minis in purple auras.",
+  "The ECHO creature splitting into three in purple light"
+ ],
+ "mode_ultracode_work": [
+  "Ultracode at rest: three dancers in purple auras run through formations on the beat.",
+  "Three small ECHO creatures dancing in formation"
+ ],
+ "mode_agents_split": [
+  "When agents start: one glitch, it shrinks and echoes into three minis, then folds back.",
+  "The ECHO creature splitting into three minis"
+ ],
+ "mode_agents_join": [
+  "When agents finish: all three fold into one, it grows back and pings once.",
+  "Three small ECHO creatures merging into one"
+ ],
+ "echo_alarm": [
+  "The rate limit state: the body flashes red with double bangs in the corners and a shake.",
+  "The ECHO creature flashing red"
+ ],
+ "ultra_fable": [
+  "Ultracode for the Fable tier: its four eyes light up and it dissolves into braille.",
+  "The Fable creature dissolving into braille dots"
+ ],
+ "ultra_opus": [
+  "Ultracode as Opus: it burns down into light that swells into a globe of braille.",
+  "The Opus creature becoming a globe of braille dots"
+ ],
+ "ultra_sonnet": [
+  "Sonnet's calm ultracode: a scan line reads it top to bottom and leaves it as braille.",
+  "The Sonnet creature scanned into braille dots"
+ ],
+ "echo_starry_night": [
+  "After Van Gogh, The Starry Night (1889, public domain): it gazes up, its antenna answers a star.",
+  "The ECHO creature on a hill under a swirling night sky"
+ ],
+ "echo_scream": [
+  "After Munch, The Scream (1893, public domain): on the bridge under the banded sky.",
+  "The ECHO creature screaming on a bridge under a banded sky"
+ ],
+ "echo_great_wave": [
+  "After Hokusai, Under the Wave off Kanagawa (about 1831, public domain): it surfs the wave.",
+  "The ECHO creature surfing a great curling wave"
+ ],
+ "echo_mona_lisa": [
+  "After Leonardo, Mona Lisa (about 1503, public domain): the smile comes and goes.",
+  "The ECHO creature posed as a half length portrait"
+ ],
+ "echo_pearl_earring": [
+  "After Vermeer, Girl with a Pearl Earring (about 1665, public domain): it turns to look.",
+  "The ECHO creature turning to look, a pearl against the shadow"
+ ],
+ "echo_creation": [
+  "After Michelangelo, The Creation of Adam (about 1512, public domain): it plays both parts.",
+  "Two ECHO creatures reaching toward each other"
+ ],
+ "echo_vitruvian": [
+  "After Leonardo's Vitruvian figure (about 1490, public domain): the square and circle poses, then a wheel.",
+  "The ECHO creature in a circle and square on parchment"
+ ],
+ "echo_thinker": [
+  "After Rodin, The Thinker (1904, public domain): bronze, a bulb, it comes alive, back to bronze.",
+  "The ECHO creature as a seated bronze statue"
+ ],
+ "echo_melting_clock": [
+  "A surrealist melting watch in our own drawing: it melts along with the watch.",
+  "The ECHO creature melting beside a drooping watch"
+ ],
+ "echo_this_is_fine": [
+  "The calm in a burning room format: coffee in hand while the room burns.",
+  "The ECHO creature sitting calmly with coffee in a burning room"
+ ],
+ "echo_distracted": [
+  "The distracted partner format: one head turns after a shiny passer by, the partner glares.",
+  "Three ECHO creatures, one turning to look back"
+ ],
+ "echo_galaxy_brain": [
+  "The expanding brain format: four brighter stages to a cosmic finale.",
+  "The ECHO creature with an ever brighter glowing head"
+ ],
+ "echo_stonks": [
+  "The stonks format: a suit, a chart line, the crash, the recovery.",
+  "The ECHO creature in a suit before a rising chart"
+ ],
+ "echo_slow_dodge": [
+  "A film moment with no characters: glyph rain, a long coat, an impossible lean as slow slugs pass.",
+  "The ECHO creature leaning far back in green glyph rain"
+ ],
+ "echo_saber_duel": [
+  "Two creatures with glowing blades in generic fencing: en garde, the bind, the spin, the bow.",
+  "Two ECHO creatures dueling with glowing blades"
+ ],
+ "echo_crosswalk": [
+  "Four walkers in single file on a zebra crossing, after a 1969 album cover photograph.",
+  "Four ECHO creatures walking across a zebra crossing"
+ ],
+ "idle_coffee": [
+  "Clawd with a mug. Steam at rest, a sip every six seconds.",
+  "Clawd holding a mug of coffee"
+ ],
+ "coffee_morning": [
+  "Waking up with the mug: shut, half, shut, open, a long sip, awake.",
+  "Clawd holding coffee, slowly waking up"
+ ],
+ "echo_idle": [
+  "The ECHO creature. Antenna ping, one glitch split per cycle.",
+  "The ECHO creature idle"
+ ],
+ "echo_float": [
+  "The body drifts back and forth over planted legs, a bob at each turn.",
+  "The ECHO creature floating over its legs"
+ ],
+ "echo_two_agents": [
+  "Glitch, split into two, work apart, merge back.",
+  "The ECHO creature splitting into two agents"
+ ],
+ "token_burner": [
+  "Past 500k tokens: flames over the head, visor gone alert. The loud state.",
+  "The ECHO creature on fire"
+ ],
+ "ultramode": [
+  "Take two: a ripple shifts the rows, then head, torso and legs slide apart and snap back.",
+  "The ECHO creature's rows shifting, then head, torso and legs sliding apart"
+ ],
+ "ultra_cube": [
+  "The first take, kept: dissolves into a spinning cube with braille dots, collapses back.",
+  "The ECHO creature dissolving into a rotating wireframe cube"
+ ],
+ "echo_walk": [
+  "Walks four cells right, glances back, walks left; alternating feet, a bob per step.",
+  "The ECHO creature walking right and left"
+ ],
+ "job_done": [
+  "Two bounces, arm up with a thumbs up, visor flashes, confetti. The payoff when a task finishes.",
+  "The ECHO creature giving a thumbs up with confetti"
+ ],
+ "echo_love": [
+  "A heart beats over the creature, two small hearts float up, eyes go soft.",
+  "The ECHO creature with a beating heart above it"
+ ],
+ "echo_consult": [
+  "In conversation: a bubble cycles dots, fills with lines while the head nods, the antenna pings as the advice lands.",
+  "The ECHO creature with a speech bubble"
+ ],
+ "echo_happy": [
+  "The eyes scrunch into chevrons and blink back and forth with the plain eyes, a long happy hold with a bounce.",
+  "The ECHO creature with chevron happy eyes"
+ ],
+ "echo_ssh": [
+  "Contact with another machine: a packet out to the tower, an LED answers, a packet back, the link goes solid.",
+  "The ECHO creature sending a packet to a server tower"
+ ],
+ "echo_loading": [
+  "Working or planning: the visor becomes a braille loading bar that fills in two staggered rows with a cursor ahead.",
+  "The ECHO creature with its visor as a loading bar"
+ ],
+ "echo_eye_spin": [
+  "Thinking: each eye becomes a braille cell and the dots run around it, two full turns, then the eyes settle.",
+  "The ECHO creature with spinning braille eyes"
+ ],
+ "echo_kiss": [
+  "Hand to the visor, a wink, a small heart leaves the fingertips and floats off while the visor warms.",
+  "The ECHO creature blowing a kiss"
+ ],
+ "echo_kiss_b": [
+  "The pucker: soft eyes, a two cell pucker, three tiny hearts drift up and away with a bounce.",
+  "The ECHO creature puckering with small hearts"
+ ],
+ "echo_summon": [
+  "Arms up, a circle draws itself on the ground and pulses, eyes flash, a small horned demon climbs out, bobs and sinks back.",
+  "The ECHO creature summoning a small demon from a circle"
+ ],
+ "echo_openclaw": [
+  "A claw extends from the arm, closes on a glowing block, pulls it into the chest, the visor flashes.",
+  "The ECHO creature grabbing a block with a claw"
+ ],
+ "echo_headphones": [
+  "Listening: soft eyes under teal cups, the body bobs on the beat, the antenna pings on the beat, a note floats off the cup.",
+  "The ECHO creature wearing headphones"
+ ],
+ "clawd_headphones": [
+  "Clawd in big blue cups on a white band, eyes closed and content, nodding on every beat while notes float up.",
+  "Clawd wearing blue headphones with a white band"
+ ],
+ "credits_out": [
+  "The alarm: visor alert, mouth wide, tears, shaking, a white scream every fourth beat.",
+  "The ECHO creature crying out"
+ ],
+ "ctf_hoodie": [
+  "Working a CTF: hood up, drawstrings, visor still teal. A long session skin.",
+  "The ECHO creature in a black hoodie"
+ ],
+ "echo_breathe": [
+  "Stock breathe with the ECHO skin, chest spinner.",
+  "ECHO creature breathing"
+ ],
+ "echo_look_around": [
+  "Stock look around, skinned.",
+  "ECHO creature looking around"
+ ],
+ "echo_wink": [
+  "Stock wink, skinned.",
+  "ECHO creature winking"
+ ],
+ "echo_surprise": [
+  "Stock surprise, skinned.",
+  "ECHO creature surprised"
+ ],
+ "echo_sleep": [
+  "Stock sleep, skinned; visor stays lit while the eyes are shut.",
+  "ECHO creature asleep"
+ ],
+ "echo_bounce": [
+  "Stock bounce, skinned; the antenna rides the jump.",
+  "ECHO creature bouncing"
+ ],
+ "echo_sway": [
+  "Stock sway, skinned.",
+  "ECHO creature swaying"
+ ],
+ "echo_think": [
+  "Stock work think, skinned.",
+  "ECHO creature thinking"
+ ],
+ "echo_mushroom_hd": [
+  "Dilated black pupils, a sky behind.",
+  "The ECHO creature in high detail with dilated black pupils under a sky"
+ ],
+ "echo_breakdance_hd": [
+  "A headspin on the antenna.",
+  "The ECHO creature in high detail spinning on its antenna"
+ ],
+ "echo_breakdance_hd_b": [
+  "The windmill.",
+  "The ECHO creature in high detail doing a windmill"
+ ],
+ "echo_acrobat_hd": [
+  "A gymnast pass: cartwheel, back handspring, backflip, stuck landing.",
+  "The ECHO creature in high detail tumbling through a gymnast pass"
+ ],
+ "echo_moonwalk_hd": [
+  "The lean and the fedora, a seamless 20 frame clip.",
+  "The ECHO creature in high detail moonwalking in a fedora"
+ ],
+ "echo_moonwalk_hd_b": [
+  "The same glide with a wrap.",
+  "The ECHO creature in high detail moonwalking with a wrap"
+ ],
+ "echo_rave_bunny_hd": [
+  "Hands up: lasers, the build, a blackout, the drop with strobe and confetti.",
+  "The ECHO creature in high detail with bunny ears and hands up under lasers"
+ ],
+ "echo_rave_bunny_hd_b": [
+  "The bounce.",
+  "The ECHO creature in high detail with bunny ears bouncing"
+ ],
+ "model_haiku": [
+  "Haiku: one size down, a quick double blink.",
+  "Haiku tier creature"
+ ],
+ "model_sonnet": [
+  "Sonnet: a second visor line and a steady breathe.",
+  "Sonnet tier creature"
+ ],
+ "model_opus": [
+  "Opus: one step brighter, the visor in flash, the antenna beating.",
+  "Opus tier creature"
+ ],
+ "model_fable": [
+  "Fable: amber marks, sideways eyes, a glint that sweeps the visor.",
+  "Fable tier creature"
+ ]
+}
