@@ -65,7 +65,7 @@ const GROUPS = [
   ['Mode', 'Modes and moments', 'Played once or held while a mode is on: ultracode, agents, Opus, the boot build, the limits.'],
   ['Model', 'Model tiers', 'One family, four signatures: the creature the desk shows while each model tier is in use.'],
   ['Culture', 'Culture', 'The ECHO creature in famous paintings, memes and pop culture moments. Public domain works are credited by maker, title and date; everything else lends its format only, and the creature plays every role.'],
-  ['Retired', 'Retired', 'Earlier versions that left the firmware table on 2026 09 29, when every creature was redrawn from scratch. Kept here for the record.'],
+  ['Retired', 'Retired', 'Earlier versions that left the firmware table on 28 and 29 September 2026, when every creature was redrawn from scratch. Kept here for the record.'],
 ];
 
 const rows = [];
