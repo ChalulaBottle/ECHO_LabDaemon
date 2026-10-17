@@ -240,3 +240,4 @@ echo creature and reenact some of these", then "ultracode". Also: the site galle
   firmware table, wildcard pool, lcd_4 build size, no flash) and the full site gallery on the site branch.
 - Nothing is flashed or pushed by the workflow. The flash is the operator's.
 - Workflow run wf_b13bfe81-beb (session 532127ae), script culture-batch-two-wf_b13bfe81-beb.js under that session's workflows/scripts; lanes draft in scratchpad culture2-lanes/<lane>. Resume with the script path and that run id.
+- 2026-10-17 morning: the first run stopped at about 2:29 AM with all eight lanes mid build (concepts and selection had finished). Rerun as wf_2296b692-dad (session ae5ebcc1), build, review and integrate only, four lanes at a time, continuing from the drafts. The worktree, the lane drafts (culture2-lanes) and the saved selection (selection.json) now live in that session's scratchpad.
