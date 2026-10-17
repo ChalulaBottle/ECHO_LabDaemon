@@ -239,3 +239,4 @@ echo creature and reenact some of these", then "ultracode". Also: the site galle
   share docs/bench while drafting), an adversarial review per lane, then one integration (script tags, JSON,
   firmware table, wildcard pool, lcd_4 build size, no flash) and the full site gallery on the site branch.
 - Nothing is flashed or pushed by the workflow. The flash is the operator's.
+- Workflow run wf_b13bfe81-beb (session 532127ae), script culture-batch-two-wf_b13bfe81-beb.js under that session's workflows/scripts; lanes draft in scratchpad culture2-lanes/<lane>. Resume with the script path and that run id.
