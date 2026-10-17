@@ -226,3 +226,16 @@ hand-roll a fourth screen before the registry exists.
 
 ## Not in scope tonight
 Touch (hardware thread), the page registry / WebSocket transport (hub plan), a hub name.
+
+## The culture batch two (2026-10-17)
+
+Operator (2026-10-17): "I also want development of more animation, get creative with pop culture and memes, the
+echo creature and reenact some of these", then "ultracode". Also: the site gallery shows 36 of 104 animations.
+
+- RESUME STATE: branch `feat/culture-batch-2` from `release/increment-4` (6b2ed79), worktree in the session
+  scratchpad `clawd-culture2`. An ultracode workflow runs: concepts (two angles), selection under the IP rule
+  above and a frame budget (about 1.1 MB of frame data in total, the lcd_4 app partition had 1.45 MB left), eight
+  lanes built in private copies of the bench (one bad animation holds back the whole export, so lanes never
+  share docs/bench while drafting), an adversarial review per lane, then one integration (script tags, JSON,
+  firmware table, wildcard pool, lcd_4 build size, no flash) and the full site gallery on the site branch.
+- Nothing is flashed or pushed by the workflow. The flash is the operator's.
