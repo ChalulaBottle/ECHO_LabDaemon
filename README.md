@@ -69,13 +69,59 @@
 >
 > The HD set is drawn on a 60 cell lattice of 8 px cells and lives in the big tier, on the 4 inch board only: mushroom hd with dilated black pupils and a sky, breakdance hd with a headspin on the antenna and its b take with a windmill, acrobat hd running a gymnast pass (cartwheel, back handspring, backflip, stuck landing), moonwalk hd with a lean and a fedora in a seamless 20 frame clip and its b take with a wrap, rave bunny hd with hands up through lasers, a build, a blackout and a drop with strobe and confetti, and its b take bouncing. Captures from the panel are in `docs/media/lcd4/`.
 >
+> **Culture**, the ECHO creature in famous paintings, memes and pop culture moments (batch one, 2026-10-03, 60 cell lattice; public domain works credited by maker, title and date, everything else lends its format only):
+>
+> | echo starry night | echo scream | echo great wave | echo mona lisa |
+> |---|---|---|---|
+> | ![](docs/media/culture/starry_night.gif) | ![](docs/media/culture/scream.gif) | ![](docs/media/culture/great_wave.gif) | ![](docs/media/culture/mona_lisa.gif) |
+>
+> | echo pearl earring | echo creation | echo vitruvian | echo thinker |
+> |---|---|---|---|
+> | ![](docs/media/culture/pearl_earring.gif) | ![](docs/media/culture/creation.gif) | ![](docs/media/culture/vitruvian.gif) | ![](docs/media/culture/thinker.gif) |
+>
+> | echo melting clock | echo this is fine | echo distracted | echo galaxy brain |
+> |---|---|---|---|
+> | ![](docs/media/culture/melting_clock.gif) | ![](docs/media/culture/this_is_fine.gif) | ![](docs/media/culture/distracted.gif) | ![](docs/media/culture/galaxy_brain.gif) |
+>
+> | echo stonks | echo slow dodge | echo saber duel | echo crosswalk |
+> |---|---|---|---|
+> | ![](docs/media/culture/stonks.gif) | ![](docs/media/culture/slow_dodge.gif) | ![](docs/media/culture/saber_duel.gif) | ![](docs/media/culture/crosswalk.gif) |
+>
+> **Culture batch three** (2026-10-28, 40 cell lattice of 12 px cells, the creature at 2x, every cell under 52 KB of frame data so twenty five fit the 4 inch board's partition; ideas and the budget in [`docs/bench/culture-batch-3-ideas.md`](docs/bench/culture-batch-3-ideas.md)):
+>
+> Six paintings, public domain, credited by maker, title and date:
+>
+> | echo wanderer | echo sunflowers | echo water lilies | echo last supper | echo napoleon |
+> |---|---|---|---|---|
+> | ![](docs/media/anims/echo_wanderer.gif) | ![](docs/media/anims/echo_sunflowers.gif) | ![](docs/media/anims/echo_water_lilies.gif) | ![](docs/media/anims/echo_last_supper.gif) | ![](docs/media/anims/echo_napoleon.gif) |
+>
+> | echo birth of venus | echo two buttons | echo mind blown | echo facepalm | echo mic drop |
+> |---|---|---|---|---|
+> | ![](docs/media/anims/echo_birth_of_venus.gif) | ![](docs/media/anims/echo_two_buttons.gif) | ![](docs/media/anims/echo_mind_blown.gif) | ![](docs/media/anims/echo_facepalm.gif) | ![](docs/media/anims/echo_mic_drop.gif) |
+>
+> Formats only (a gesture, a setting, never a character or a caption), then the lab, the range and October:
+>
+> | echo deal with it | echo kaiju | echo flag capture | echo packet sniff | echo hash cracked |
+> |---|---|---|---|---|
+> | ![](docs/media/anims/echo_deal_with_it.gif) | ![](docs/media/anims/echo_kaiju.gif) | ![](docs/media/anims/echo_flag_capture.gif) | ![](docs/media/anims/echo_packet_sniff.gif) | ![](docs/media/anims/echo_hash_cracked.gif) |
+>
+> | echo terminal glow | echo pumpkin | echo ghost sheet | echo countdown | echo server rack |
+> |---|---|---|---|---|
+> | ![](docs/media/anims/echo_terminal_glow.gif) | ![](docs/media/anims/echo_pumpkin.gif) | ![](docs/media/anims/echo_ghost_sheet.gif) | ![](docs/media/anims/echo_countdown.gif) | ![](docs/media/anims/echo_server_rack.gif) |
+>
+> | echo gpu fan | echo chat ping | echo sleepy | echo curious | echo focused |
+> |---|---|---|---|---|
+> | ![](docs/media/anims/echo_gpu_fan.gif) | ![](docs/media/anims/echo_chat_ping.gif) | ![](docs/media/anims/echo_sleepy.gif) | ![](docs/media/anims/echo_curious.gif) | ![](docs/media/anims/echo_focused.gif) |
+>
+> The last three are moods for the idle rotation. Every culture creature is big tier and sits in the splash's wildcard pool on boards built with SPLASH_BIG; frame sheets of every loop are in `docs/media/sheets/` (made with `tools/anim_sheet.py`).
+>
 > **Model tiers**, one family, four signatures (Haiku, Sonnet, Opus, Fable):
 >
 > ![Model tier creatures](docs/media/sheets/model-tiers.png)
 >
 > Plus the thinking set (echo think spin, echo think deep, echo work, echo write, echo read) and the
 > modes (opus enter, opus work, ultracode enter, ultracode work, agents split, agents join).
-> 83 animations in the 4 inch board's firmware table as of 2026-10-01 (73 on boards built without the big tier); every one plays by name from the host (`a` field).
+> 83 animations are on the 4 inch board as of 2026-10-01; the next flash carries 124 (the sixteen culture creatures of batch one and the twenty five of batch three, 73 on boards built without the big tier); every one plays by name from the host (`a` field).
 >
 > Full progress board with states: [chalulabottle.github.io/ECHO_LabDaemon#creatures](https://chalulabottle.github.io/ECHO_LabDaemon/#creatures).
 >
@@ -346,18 +392,37 @@ The buttons (BOOT is the aux key on the 4 inch board):
 | BOOT tap | sends `aux`, play or pause | sends `aux`, then approves a prompt, else clears a notification, else the next creature on the splash and brightness on usage |
 | BOOT double tap | sends `aux2`, next track | two single taps |
 | Touch tap | back to the creature | unchanged |
+| Touch long press (boards with working touch) | the next dance view while the page dances, and no tap follows; on any other page a tap | unchanged |
 
 On the page a single tap waits the 400 ms out in case a second one follows, so it lands slightly late there and nowhere else. A page left this way stays live out of sight: its updates (title, lines, progress, creature, art) never bring it back, and it returns on the next PWR cycle or when a page with a different `pg` arrives.
 
 Dance floor: `pa` set to `dance` is the dancing daemon. The board alternates two pools on the card, a feature for 90 s (echo breakdance hd, echo acrobat hd, echo rave bunny hd, echo dj, echo rave, echo mixer) and then a clip of a repeating move for 30 s (echo moonwalk hd, echo hop, echo swing, echo headphones, echo notes, echo cartwheel). Each pick is random within its pool and never the same one twice in a row, and a name missing from the board's table is skipped, so the same pools serve every board. Between two dancers a 1.2 s transition shrinks the creature to a dot and brings it back up as the next one. The clock runs only while the page is on top; a track change keeps the sequence and a page clear resets it. The serial log reads `page: dance feature <name>` and `page: dance clip <name>`. Any other name in `pa` is that creature, fixed.
 
+Dance view: how big the dance floor draws its dancer (`pa` set to `dance`, which is the music card while a track plays), a board setting kept in NVS. `card` is the card above. `large`, the default, draws the dancer as big as the panel allows over two compact lines and a bar half as tall: 360 px on the 480 px boards, which 20, 40 and 60 cell creatures all divide, so every dancer is the same size. The two lines are the title, in the lines' type instead of the big serif, and `p1`: the track and the artist on the music card. `p2` and `p3` are left off and album art becomes a 44 px thumbnail beside the two lines. `full` is a music video: the dancer over the whole panel (24 px cells for a 20 cell creature, 8 px for an HD one) with the same two lines and a 6 px bar on a strip along the bottom, drawn over it at the overlay opacity, 0 to 100, default 55. The 1.2 s change of dancer runs at whatever size the view draws. Every other page keeps the card in every view, all three lines in sight: a page with a fixed creature or none, which includes the music card while paused (its `pa` turns to `echo headphones` and its `p2` says paused) and every other card the engine sends. Notifications and prompts still cover the page in all three views. The host sets both with the cmd message, `{"c":"dview","v":"full"}` and `{"c":"dvo","v":"40"}`, answered `{"c":"dview","ok":1}` or with an `err`, and `status` reports them as `dv` and `do`; the serial console takes the same verbs (`cmd dview full`, `cmd dvo 40`). On boards with working touch a long press on a dancing page (0.4 s, LVGL's default) steps to the next view. The 4 inch board has no free gesture for it: its touch does not respond, holding BOOT is the pairing gesture (a release after 3 s clears the bonds), holding PWR belongs to the power chip, and every tap on the page is already taken, so there it is set from the host or the console. The overlay is see through, never blurred: a blur is a filter pass over every pixel the dancer redraws, too much for an ESP32 beside an RGB panel that scans out of the same PSRAM. Large and full need a canvas up to the panel's size in PSRAM, so the C6 boards keep the card and answer `"no"`. In every view the panel redraws only the box of cells that changed from one frame to the next; `docs/bench/dance-view.html` shows the three side by side with what each costs.
+
 Album art, on the 4 inch board only: `pi` names a picture, 8 to 16 characters of a to z and 0 to 9 (the engine sends 12). The board requests it over its own BLE characteristic (the one ending `0005`), a 2 byte indexed chunk stream behind an ab, al, an header, staged in PSRAM and shown at 128 px square beside the text; a miss is resent up to 3 rounds, and the art is kept once shown or already cached. The older path, fetching `<art base><pi>.jpg` over HTTP on the board's own Wi-Fi, is parked (campus Wi-Fi is a captive portal with client isolation). With no art, or when a fetch fails, the card keeps its plain layout. The engine's art listener on port 8977 is loopback only by default and opt-in onto the LAN.
 
 Status as of 2026-10-02: flashed on both the firmware and daemon sides (firmware `efd5f1f`, daemon `4ab5e74`), not yet confirmed end to end. The first run is blocked on a Windows Bluetooth re-pair, since the cached GATT table hides the new characteristic.
 
-Wi-Fi reaches the board over serial (above) or over BLE, as its own message: `{"wf": ssid, "wp": password}`, the SSID 1 to 32 bytes and the password empty for an open network, 8 to 63 characters, or exactly 64 hex digits; `{"wf": ""}` forgets the network. The board answers `{"ack":true,"wf":"ok"}` when it stored or forgot them and `{"err":true,"wf":"no"}` when it did not; a board built without Wi-Fi answers the plain `{"err":true}`. From the PC, `python -m labdaemon_engine wifi set "<ssid>"` asks for the password without echoing it and writes `wifi.json` into `%LOCALAPPDATA%\Clawdmeter`, and `wifi clear` writes the forget. The tray sends the file once to the connected boards and deletes it after a write succeeds, so a board without Wi-Fi can use it up: run `wifi set` while the 4 inch board shows Connected. A follow-up will make the tray wait for the `wf` answer.
+Wi-Fi reaches the board over serial (above) or over BLE, as its own message: `{"wf": ssid, "wp": password}`, the SSID 1 to 32 bytes and the password empty for an open network, 8 to 63 characters, or exactly 64 hex digits; `{"wf": ""}` forgets the network. The board answers `{"ack":true,"wf":"ok"}` when it stored or forgot them and `{"err":true,"wf":"no"}` when it did not; a board built without Wi-Fi answers the plain `{"err":true}`. From the PC, `python -m labdaemon_engine wifi set "<ssid>"` asks for the password without echoing it and writes `wifi.json` into `%LOCALAPPDATA%\Clawdmeter`, and `wifi clear` writes the forget. The tray sends the file once to each connected board and deletes it only once a board answered `"wf":"ok"`, waiting 3.5 s for the answers; a board without Wi-Fi leaves it for one that has Wi-Fi, so the 4 inch board still gets the credentials when it connects after `wifi set` ran while only another board was connected.
 
 The host side is [LabDaemon Engine](https://github.com/ChalulaBottle/labdaemon-engine) (private), which writes `notify.json` and `page.json` into `%LOCALAPPDATA%\Clawdmeter` for the tray daemon to relay, the same way it relays `approve.json`.
+
+### Commands from the host (ECHO edition)
+
+A command is a named verb, `{"c": verb, "v": value}`, its own BLE message like a notification or a page, one verb a message. The value is always text; a number there reads as empty, which the verbs that need one refuse. The board answers each one on TX in place of the plain ack: `{"c": verb, "ok": 1}` when it did it, `{"c": verb, "err": why}` when it did not, and for `status` its report. Firmware from before the commands has no handler for them and answers the plain `{"err":true}`.
+
+| Verb | Value | What the board does | Refused with |
+|---|---|---|---|
+| `bright` | 0 to 100, in digits | sets the panel brightness and keeps it in NVS; 0 is dim, never black | `value`; `no` on a board whose brightness cannot be set (`fixed_brightness`) |
+| `anim` | a creature name, or empty | holds that creature on the splash, with no rotation, until another hold, an empty one or the creature button at the desk | `name` when the board's table has no creature of that name |
+| `screen` | `splash`, `usage` or `page` | puts that screen on top; `page` brings the live page back | `no page` while no page is live, `value` for any other name |
+| `dance` | `next` | the next dancer of a dancing page | `no dance` while no page dances, `value` |
+| `dview` | `card`, `large` or `full` | the dance view, kept in NVS (default `large`) | `value`; `no` for `large` or `full` on a board without PSRAM |
+| `dvo` | 0 to 100 | the full view's strip opacity, kept in NVS (default 55) | `value`; `no` on a board without PSRAM |
+| `status` | empty | answers with its report instead of an ok | never |
+
+Any other verb is answered `{"c": verb, "err": "verb"}`, the verb named back as it came when it is a word of a to z of up to 15 letters, and as `"?"` when it is not. A verb the board carried out lights a dark panel, so the change is seen; `status` is only a look and leaves a dark panel dark. The report is `{"c":"status","br","scr","an","fw","n","dv","do"}`, within one TX notification: `br` the brightness from 0 to 100 (-1 where it cannot be set), `scr` the screen on top, `an` the creature on the splash (its name cut from the end when the whole would not fit), `fw` the board's name, `n` how many animations its table has, `dv` the view a dancing page gets (`card` on a board without PSRAM) and `do` the overlay opacity. The serial console runs the same verbs as `cmd <verb> <value>`, the value being the rest of the line (`cmd anim echo dj`, `cmd status`), and its answer goes to a linked host too. On the PC the engine's board controller drops `cmd\<ns>.json` files for the tray to relay, and the tray keeps each board's answers in `board\<address>.json` (`daemon/README-windows.md`, Commands).
 
 ### Make the creature follow Claude
 

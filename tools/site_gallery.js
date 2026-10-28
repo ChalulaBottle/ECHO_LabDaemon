@@ -37,10 +37,17 @@ const nextRev = opt('--next', NEXT_REV);
 
 const BENCH = require(path.join(BENCH_DIR, 'anims.js'));
 for (const f of fs.readdirSync(BENCH_DIR).filter(n => /^anims_.*\.js$/.test(n)).sort()) require(path.join(BENCH_DIR, f));
-const culture = new Set();
-for (const f of fs.readdirSync(BENCH_DIR).filter(n => /^anims_culture_.*\.js$/.test(n))) {
-  for (const m of fs.readFileSync(path.join(BENCH_DIR, f), 'utf8').matchAll(/key:\s*'([a-z0-9_]+)'/g)) culture.add(m[1]);
-}
+// Two groups come from the file prefix, not the category: the culture files (paintings, memes, formats) and
+// the lab files (CTF life, the lab's hardware, the season). The mood files keep their own category (Idle).
+const keysIn = prefix => {
+  const keys = new Set();
+  for (const f of fs.readdirSync(BENCH_DIR).filter(n => n.startsWith(prefix) && n.endsWith('.js'))) {
+    for (const m of fs.readFileSync(path.join(BENCH_DIR, f), 'utf8').matchAll(/key:\s*'([a-z0-9_]+)'/g)) keys.add(m[1]);
+  }
+  return keys;
+};
+const culture = keysIn('anims_culture_');
+const lab = keysIn('anims_lab_');
 
 const index = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'echo_anims', '_index.json'), 'utf8'));
 const meta = new Map(index.map(e => [e.filename.replace(/\.html$/, ''), e]));
@@ -65,6 +72,7 @@ const GROUPS = [
   ['Mode', 'Modes and moments', 'Played once or held while a mode is on: ultracode, agents, Opus, the boot build, the limits.'],
   ['Model', 'Model tiers', 'One family, four signatures: the creature the desk shows while each model tier is in use.'],
   ['Culture', 'Culture', 'The ECHO creature in famous paintings, memes and pop culture moments. Public domain works are credited by maker, title and date; everything else lends its format only, and the creature plays every role.'],
+  ['Lab', 'Lab, CTF and the season', 'The creature at work in the lab and on the range: a flag captured, a packet caught, a hash cracked, a terminal glow, a rack, a fan, a chat ping, and October.'],
   ['Retired', 'Retired', 'Earlier versions that left the firmware table on 28 and 29 September 2026, when every creature was redrawn from scratch. Kept here for the record.'],
 ];
 
@@ -75,7 +83,7 @@ for (const a of BENCH.anims) {
   const m = meta.get(a.key);
   const fw = m ? m.name : a.key.replace(/_/g, ' ');
   const state = flashedTable.has(fw) ? 'On device' : nextTable.has(fw) ? 'Next flash' : 'Retired';
-  const group = state === 'Retired' ? 'Retired' : culture.has(a.key) ? 'Culture' : (m ? m.category : 'Active');
+  const group = state === 'Retired' ? 'Retired' : culture.has(a.key) ? 'Culture' : lab.has(a.key) ? 'Lab' : (m ? m.category : 'Active');
   const gif = gifFor(a.key);
   const cap = captions[a.key];
   if (!gif) problems.push(`${a.key}: no GIF`);

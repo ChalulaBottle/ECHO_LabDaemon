@@ -381,6 +381,14 @@
     "palette_size": 7
   },
   {
+    "filename": "echo_birth_of_venus.html",
+    "name": "echo birth of venus",
+    "category": "Idle",
+    "frame_count": 30,
+    "palette_size": 10,
+    "tier": "big"
+  },
+  {
     "filename": "echo_creation.html",
     "name": "echo creation",
     "category": "Idle",
@@ -397,11 +405,27 @@
     "tier": "big"
   },
   {
+    "filename": "echo_deal_with_it.html",
+    "name": "echo deal with it",
+    "category": "Idle",
+    "frame_count": 29,
+    "palette_size": 10,
+    "tier": "big"
+  },
+  {
     "filename": "echo_distracted.html",
     "name": "echo distracted",
     "category": "Active",
     "frame_count": 39,
     "palette_size": 10,
+    "tier": "big"
+  },
+  {
+    "filename": "echo_facepalm.html",
+    "name": "echo facepalm",
+    "category": "Idle",
+    "frame_count": 27,
+    "palette_size": 7,
     "tier": "big"
   },
   {
@@ -421,6 +445,22 @@
     "tier": "big"
   },
   {
+    "filename": "echo_kaiju.html",
+    "name": "echo kaiju",
+    "category": "Active",
+    "frame_count": 30,
+    "palette_size": 10,
+    "tier": "big"
+  },
+  {
+    "filename": "echo_last_supper.html",
+    "name": "echo last supper",
+    "category": "Active",
+    "frame_count": 27,
+    "palette_size": 10,
+    "tier": "big"
+  },
+  {
     "filename": "echo_melting_clock.html",
     "name": "echo melting clock",
     "category": "Idle",
@@ -429,10 +469,34 @@
     "tier": "big"
   },
   {
+    "filename": "echo_mic_drop.html",
+    "name": "echo mic drop",
+    "category": "Active",
+    "frame_count": 30,
+    "palette_size": 10,
+    "tier": "big"
+  },
+  {
+    "filename": "echo_mind_blown.html",
+    "name": "echo mind blown",
+    "category": "Active",
+    "frame_count": 31,
+    "palette_size": 10,
+    "tier": "big"
+  },
+  {
     "filename": "echo_mona_lisa.html",
     "name": "echo mona lisa",
     "category": "Idle",
     "frame_count": 24,
+    "palette_size": 10,
+    "tier": "big"
+  },
+  {
+    "filename": "echo_napoleon.html",
+    "name": "echo napoleon",
+    "category": "Active",
+    "frame_count": 28,
     "palette_size": 10,
     "tier": "big"
   },
@@ -485,6 +549,14 @@
     "tier": "big"
   },
   {
+    "filename": "echo_sunflowers.html",
+    "name": "echo sunflowers",
+    "category": "Idle",
+    "frame_count": 28,
+    "palette_size": 10,
+    "tier": "big"
+  },
+  {
     "filename": "echo_thinker.html",
     "name": "echo thinker",
     "category": "Thinking",
@@ -501,10 +573,34 @@
     "tier": "big"
   },
   {
+    "filename": "echo_two_buttons.html",
+    "name": "echo two buttons",
+    "category": "Thinking",
+    "frame_count": 29,
+    "palette_size": 10,
+    "tier": "big"
+  },
+  {
     "filename": "echo_vitruvian.html",
     "name": "echo vitruvian",
     "category": "Idle",
     "frame_count": 28,
+    "palette_size": 10,
+    "tier": "big"
+  },
+  {
+    "filename": "echo_wanderer.html",
+    "name": "echo wanderer",
+    "category": "Idle",
+    "frame_count": 29,
+    "palette_size": 10,
+    "tier": "big"
+  },
+  {
+    "filename": "echo_water_lilies.html",
+    "name": "echo water lilies",
+    "category": "Idle",
+    "frame_count": 30,
     "palette_size": 10,
     "tier": "big"
   },
@@ -514,6 +610,86 @@
     "category": "Mode",
     "frame_count": 35,
     "palette_size": 10
+  },
+  {
+    "filename": "echo_chat_ping.html",
+    "name": "echo chat ping",
+    "category": "Active",
+    "frame_count": 27,
+    "palette_size": 8,
+    "tier": "big"
+  },
+  {
+    "filename": "echo_countdown.html",
+    "name": "echo countdown",
+    "category": "Active",
+    "frame_count": 24,
+    "palette_size": 10,
+    "tier": "big"
+  },
+  {
+    "filename": "echo_flag_capture.html",
+    "name": "echo flag capture",
+    "category": "Active",
+    "frame_count": 28,
+    "palette_size": 10,
+    "tier": "big"
+  },
+  {
+    "filename": "echo_ghost_sheet.html",
+    "name": "echo ghost sheet",
+    "category": "Idle",
+    "frame_count": 26,
+    "palette_size": 10,
+    "tier": "big"
+  },
+  {
+    "filename": "echo_gpu_fan.html",
+    "name": "echo gpu fan",
+    "category": "Active",
+    "frame_count": 28,
+    "palette_size": 10,
+    "tier": "big"
+  },
+  {
+    "filename": "echo_hash_cracked.html",
+    "name": "echo hash cracked",
+    "category": "Thinking",
+    "frame_count": 28,
+    "palette_size": 10,
+    "tier": "big"
+  },
+  {
+    "filename": "echo_packet_sniff.html",
+    "name": "echo packet sniff",
+    "category": "Thinking",
+    "frame_count": 28,
+    "palette_size": 10,
+    "tier": "big"
+  },
+  {
+    "filename": "echo_pumpkin.html",
+    "name": "echo pumpkin",
+    "category": "Active",
+    "frame_count": 30,
+    "palette_size": 10,
+    "tier": "big"
+  },
+  {
+    "filename": "echo_server_rack.html",
+    "name": "echo server rack",
+    "category": "Active",
+    "frame_count": 25,
+    "palette_size": 10,
+    "tier": "big"
+  },
+  {
+    "filename": "echo_terminal_glow.html",
+    "name": "echo terminal glow",
+    "category": "Thinking",
+    "frame_count": 26,
+    "palette_size": 10,
+    "tier": "big"
   },
   {
     "filename": "model_haiku.html",
@@ -584,6 +760,30 @@
     "category": "Mode",
     "frame_count": 8,
     "palette_size": 7
+  },
+  {
+    "filename": "echo_curious.html",
+    "name": "echo curious",
+    "category": "Idle",
+    "frame_count": 25,
+    "palette_size": 8,
+    "tier": "big"
+  },
+  {
+    "filename": "echo_focused.html",
+    "name": "echo focused",
+    "category": "Idle",
+    "frame_count": 21,
+    "palette_size": 7,
+    "tier": "big"
+  },
+  {
+    "filename": "echo_sleepy.html",
+    "name": "echo sleepy",
+    "category": "Idle",
+    "frame_count": 19,
+    "palette_size": 7,
+    "tier": "big"
   },
   {
     "filename": "echo_cartwheel.html",

@@ -438,5 +438,105 @@
  "model_fable": [
   "Fable: amber marks, sideways eyes, a glint that sweeps the visor.",
   "Fable tier creature"
+ ],
+ "echo_wanderer": [
+  "After Friedrich's Wanderer (1818): a small ECHO stands on a crag above a rolling sea of fog, turns its head, and pings.",
+  "A small ECHO seen from behind atop a dark crag, fog banks rolling below and around it, far peaks behind."
+ ],
+ "echo_sunflowers": [
+  "After Van Gogh's Sunflowers (1888): ECHO is the vase, and its five sunflowers turn to follow a small sun across the wall.",
+  "ECHO as a vase on a table, five sunflowers rising from its head turning toward a passing sun; a petal falls."
+ ],
+ "echo_water_lilies": [
+  "After Monet's water lily bridge (1899): ECHO is the pond's frog, hopping on its lily pad while drops ring the water.",
+  "ECHO crouched on a lily pad under a green arched footbridge, hopping straight up as rings spread on the pond."
+ ],
+ "echo_last_supper": [
+  "After Leonardo's Last Supper (about 1495): thirteen small ECHOs at one table; the middle one flings its arms out and a wave rolls along.",
+  "Thirteen small ECHO creatures behind a long white table; the middle one spreads its arms and a wave of hops follows."
+ ],
+ "echo_napoleon": [
+  "After David's Napoleon Crossing the Alps (1801): ECHO rides a rearing ECHO horse, cape streaming, one arm pointing up.",
+  "A small ECHO in a gold cape rides a big teal ECHO horse rearing on a stormy slope, raising one arm."
+ ],
+ "echo_birth_of_venus": [
+  "After Botticelli: ECHO rides a scallop shell over the waves while a little cloud creature blows roses past it.",
+  "ECHO stands on a pink scallop shell at sea; a cloud creature blows wind and roses."
+ ],
+ "echo_two_buttons": [
+  "ECHO sweats over a red and a blue button, hovers over each, then slams both at once and holds them down, relieved.",
+  "ECHO behind a console hovers over a red and a blue button, then slams both."
+ ],
+ "echo_mind_blown": [
+  "Hands to its temples, ECHO's head top lifts off, sprays into pixels with sparks, then rains back home.",
+  "ECHO's head top bursts into pixels and sparks, then the pixels fall back into place."
+ ],
+ "echo_facepalm": [
+  "ECHO goes flat eyed, raises an open palm over its visor, slumps with a sigh, then drags the hand off.",
+  "ECHO covers one side of its visor with an open palm and slumps, antenna drooping."
+ ],
+ "echo_mic_drop": [
+  "ECHO holds a microphone out at arm's length, lets go, watches it bounce, and walks off stage as the iris closes.",
+  "ECHO drops a microphone on a lit stage and walks off; the mic lies in the spotlight."
+ ],
+ "echo_deal_with_it": [
+  "Dark shades step down from the top of the frame, land on the visor, and ECHO lifts its chin with a smirk and a sparkle.",
+  "ECHO wearing plain dark sunglasses that have just dropped onto its visor"
+ ],
+ "echo_kaiju": [
+  "ECHO looms over a night city, stomps and roars, knocks a lit tower over, then sheepishly stands it back up.",
+  "Giant ECHO behind dark towers with gold windows under sweeping searchlights"
+ ],
+ "echo_flag_capture": [
+  "ECHO dashes to the red stand, pulls the flag, runs it home, plants it and cheers as it bursts and respawns.",
+  "ECHO carrying a red flag on a white pole across a teal and red field"
+ ],
+ "echo_packet_sniff": [
+  "Packets stream along a wire under ECHO's magnifier; one lights red, ECHO plucks it off, inspects it, flicks it away.",
+  "ECHO holding a magnifier over a wire of packets, one packet glowing red"
+ ],
+ "echo_hash_cracked": [
+  "Four reels in a padlock spin and stop one by one, they flash green, the shackle springs and ECHO pumps a fist.",
+  "ECHO under a gold padlock whose four little windows have turned green"
+ ],
+ "echo_terminal_glow": [
+  "A late night at the terminal: lines of glow scroll up as ECHO types, the screen's light pulsing across its face.",
+  "The teal ECHO creature beside a glowing terminal, typing as blocks of light scroll up the screen."
+ ],
+ "echo_pumpkin": [
+  "ECHO carves a pumpkin, lights it with a spark from its own antenna, then rolls it away for a fresh one.",
+  "The teal ECHO creature carves a jack o lantern that glows gold when a spark from its antenna drops in."
+ ],
+ "echo_ghost_sheet": [
+  "ECHO floats about in a ghost sheet with its own visor peering through the eye holes, then lifts the sheet to peek.",
+  "The teal ECHO creature under a white ghost sheet, floating at night, lifting the hem to peek out."
+ ],
+ "echo_countdown": [
+  "A split flap card counts 3, 2, 1 while ECHO crouches lower, then it bursts in gold and ECHO hops with its arms up.",
+  "A big 3, 2, 1 countdown over the teal ECHO creature, which braces, then leaps as the card bursts."
+ ],
+ "echo_server_rack": [
+  "One unit in the rack turns red; ECHO pats it twice, the lights come back green, and it nods.",
+  "The teal ECHO creature beside a server rack, patting a red unit until its lights turn green again."
+ ],
+ "echo_gpu_fan": [
+  "A big case fan behind ECHO spins up to a blur; the draught bends its antenna back, heat rises, then it spins down and the antenna pings.",
+  "Teal pixel creature beside a grey case fan that spins up to a blur, its antenna bent back in the wind."
+ ],
+ "echo_chat_ping": [
+  "A chat bubble pops in with one dot and ECHO perks up; by the third dot it sags, antenna flopped, and sighs.",
+  "Teal pixel creature perking up at a cream chat bubble, then slumping as its dots reach three."
+ ],
+ "echo_sleepy": [
+  "ECHO yawns with its visor stretched tall, its lids sink in three steps, its head nods, and it jolts awake.",
+  "Teal pixel creature yawning, eyes drooping shut and head nodding, then jolting awake with wide eyes."
+ ],
+ "echo_curious": [
+  "A small spark drifts past; ECHO tilts its head, tracks it with eyes and antenna, reaches out, and it pops.",
+  "Teal pixel creature tilting its head to follow a gold spark, then reaching for it as it bursts."
+ ],
+ "echo_focused": [
+  "ECHO narrows its eyes, a reticle draws itself round its visor and locks on, one slow blink, then it fades.",
+  "Teal pixel creature with narrowed eyes as thin corner brackets close in around its visor."
  ]
 }
