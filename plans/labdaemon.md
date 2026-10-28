@@ -7,6 +7,13 @@ test the hooks, and it must run on the smaller board too (both plugged in, both 
 
 ## RESUME STATE
 
+- **2026-10-28, CULTURE BATCH THREE BUILT, NOT FLASHED:** twenty five more creatures on the 40 cell lattice
+  (`plans/creatures-and-modes.md` § The culture batch three, the table, the review notes and the build figures),
+  merged into `release/increment-4` with the firmware table at 124 rows with SPLASH_BIG and 73 without; the site
+  branch `port/waveshare-lcd-4` carries the gallery (135 tiles, 41 next flash) and README. Firmware and daemon are
+  otherwise unchanged: nothing else to restart, no re-pair. **Exact next action:** flash lcd_4 (`$env:PLATFORMIO_OFFLINE
+  = "1"`, `pio run -e waveshare_lcd_4 -t upload --upload-port COM11`), `anim echo kaiju` on serial, device captures,
+  then FLASHED_REV in `tools/site_gallery.js`.
 - 2026-10-14, built on branch `feat/tray-wf-answer` (from `release/increment-4`; daemon `91a6f52`,
   docs `1985c94`), not merged, not pushed, not live until the tray restarts on it: the tray waits
   for the board's `wf` answer before it removes wifi.json (Increment 3, Housekeeping), the tray's

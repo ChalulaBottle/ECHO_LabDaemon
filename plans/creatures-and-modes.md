@@ -7,6 +7,13 @@ various agents", "button #1 to bring up the stats", "the number of agents that a
 
 ## RESUME STATE
 
+- **2026-10-28, CULTURE BATCH THREE BUILT, NOT FLASHED (branch `feat/culture-batch-3` from `release/increment-4`,
+  merged into it; site on `site/culture-batch-3` merged into `port/waveshare-lcd-4`):** twenty five creatures on
+  the 40 cell lattice (§ The culture batch three below), 1,092,800 bytes of frames, table 124 rows with SPLASH_BIG
+  and 73 without, all twenty five in the wildcard pool. Build figures in that section. **Exact next action:** the
+  operator flashes lcd_4 (`$env:PLATFORMIO_OFFLINE = "1"`, then in `firmware` `pio run -e waveshare_lcd_4 -t upload
+  --upload-port COM11`), plays `anim echo kaiju`, `anim echo wanderer`, `anim echo pumpkin` on serial, device
+  captures, then moves FLASHED_REV in `tools/site_gallery.js` to the flashed table's commit and reruns it.
 - **2026-09-29 correction:** the creature hooks (`clawdmeter_hooks.py`, all 11 events) ARE installed in
   `~/.claude/settings.json` and proven live on the panel (ultracode work + agents badge during workflow
   wf_0d1fbc33-2f9). Lines below saying "hook NOT installed" refer only to the PermissionRequest approve
@@ -151,6 +158,67 @@ checkout, so `git status` lists every JSON as modified with no content change; `
 tables, `docs/media/anims` GIFs (`anim_gif.py --only`) and the landing band; the pearl earring review fixes (a
 stray rim cell, the broken fold, the pearl wire rounding, the mouth timing) and the optional polish in each lane's
 review; on the panel, the mona lisa's faint smile, the thinker's dark bronze and the slow dodge coat.
+
+## The culture batch three (2026-10-28)
+
+Operator (2026-10-28, overnight): "produce me another 25 animations and have them ready for review in the morning",
+"be creative and keep the style and theming and branding we have already developed, update everything that required
+the landing page, repo page, everything", "assume that I approve everything". Built the way the cloud brief
+(`CLOUD-BRIEF-culture-batch-3.md` on `cloud/culture-batch-3`) laid out, locally: ideas first
+(`docs/bench/culture-batch-3-ideas.md`, 33 candidates, 25 picked), five drawing lanes of five in private copies of
+the bench, a fix pass per cell from its frame sheet, three reworks (the wanderer at the painting's proportions, the
+last supper's wave, the facepalm hand), then one integration.
+
+- **The lattice and the budget.** 40 cells (12 px cells, the creature at 2x through `upscale(echoPing(ping), 2)`),
+  every cell at or under 52,000 bytes of frame data (32 frames at most), so twenty five fit the 1,440,757 bytes the
+  lcd_4 app partition had left after batch one. Batch total 1,092,800 bytes in 683 frames. All tier big.
+- **Files.** `docs/bench/anims_culture_<slug>.js` (twelve: six paintings, six formats), `anims_lab_<slug>.js` (ten:
+  the range, the lab, October), `anims_mood_<slug>.js` (three, category Idle). Sheets of every loop in
+  `docs/media/sheets/<key>-sheet.png` from the new `tools/anim_sheet.py`; GIFs in `docs/media/anims/`.
+- **Renamed before it shipped:** `echo slack ping` became `echo chat ping` (the word is a trademark; the bubble is a
+  plain cream chat bubble with dots, no app mark or colour).
+- **Site.** `tools/site_gallery.js` gained a Lab, CTF and the season group (files `anims_lab_*`), captions for the
+  twenty five in `tools/site_gallery_captions.json`; the gallery shows 135 tiles, 83 on device, 41 next flash.
+
+| fwname | after | frames | bytes | loop |
+|---|---|---|---|---|
+| echo wanderer | Friedrich, Wanderer above the Sea of Fog (1818, public domain): the creature at 1x on a crag over the fog, a head turn, a ping | 29 | 46,400 | 8.97 s |
+| echo sunflowers | Van Gogh, Sunflowers (1888, public domain): the creature is the vase, five flowers follow a sun | 28 | 44,800 | 8.08 s |
+| echo water lilies | Monet, Bridge over a Pond of Water Lilies (1899, public domain): the pond's frog on its pad under the bridge | 30 | 48,000 | 7.29 s |
+| echo last supper | Leonardo, The Last Supper (about 1495, public domain): thirteen small creatures, an arm spread, a wave of hops | 27 | 43,200 | 6.26 s |
+| echo napoleon | David, Napoleon Crossing the Alps (1801, public domain): a rider on a rearing creature horse, cape streaming | 28 | 44,800 | 7.60 s |
+| echo birth of venus | Botticelli, The Birth of Venus (about 1485, public domain): on a scallop shell, a cloud creature blowing roses | 30 | 48,000 | 6.72 s |
+| echo two buttons | the sweating choice format: a red and a blue button, both slammed | 29 | 46,400 | 6.52 s |
+| echo mind blown | the gesture: the head top lifts into pixels and rains back | 31 | 49,600 | 5.69 s |
+| echo facepalm | the gesture: an open palm over the near eye, a slump | 27 | 43,200 | 8.71 s |
+| echo mic drop | the gesture: a microphone dropped on a lit stage, a walk off, an iris | 30 | 48,000 | 5.66 s |
+| echo deal with it | the format: dark shades step down onto the visor, a chin lift | 29 | 46,400 | 6.19 s |
+| echo kaiju | a giant monster film format, no named monster: a city, a stomp, a tower knocked over and stood back up | 30 | 48,000 | 6.06 s |
+| echo flag capture | capture the flag: a dash, the grab, the plant, a burst | 28 | 44,800 | 5.72 s |
+| echo packet sniff | packets on a wire under a magnifier, one lights red and is plucked off | 28 | 44,800 | 5.70 s |
+| echo hash cracked | a padlock with four reels that stop one by one, the shackle springs | 28 | 44,800 | 5.68 s |
+| echo terminal glow | typing at a terminal in the dark, lines of glow scrolling | 26 | 41,600 | 5.60 s |
+| echo pumpkin | carving a pumpkin, a spark from the antenna lights it | 30 | 48,000 | 5.59 s |
+| echo ghost sheet | under a sheet with eye holes, floating, a peek | 26 | 41,600 | 6.09 s |
+| echo countdown | 3, 2, 1 on a split flap card, a brace, a burst and a hop | 24 | 38,400 | 5.42 s |
+| echo server rack | a rack unit goes red, two pats, green again | 25 | 40,000 | 5.31 s |
+| echo gpu fan | a case fan spins up behind it, the antenna bends in the wind | 28 | 44,800 | 5.77 s |
+| echo chat ping | a chat bubble with one dot, a perk up, three dots, a sag | 27 | 43,200 | 6.86 s |
+| echo sleepy | a yawn, lids in three steps, a nod, a jolt awake (Idle) | 19 | 30,400 | 8.50 s |
+| echo curious | a spark drifts past, a head tilt, a reach, a pop (Idle) | 25 | 40,000 | 6.95 s |
+| echo focused | narrowed eyes, a reticle locks round the visor, one slow blink (Idle) | 21 | 33,600 | 8.16 s |
+
+Review notes the lanes left (worth a look on the device): the terminal is small beside the creature and the light
+lands from the side; the last supper is the busiest cell at thumbnail size; the water lilies' drop rings are half
+off the panel's edge; the flag capture's dash is nine columns, closer to a lunge; the packet sniff's magnifier is
+a held ring; the curious head tilt steps the visor band; the focused brackets may read as a visor frame once locked.
+
+Build (2026-10-28, `PLATFORMIO_OFFLINE=1`, release builds, nothing flashed): lcd_4 before the batch 82.6 percent
+(6,816,779 of 8,257,536 bytes), after it 95.8 percent (7,912,159 bytes, 345,377 left; the batch cost 1,095,380 bytes
+in the binary against 1,092,800 of frame data). amoled_216 99.2 percent (3,316,107 of 3,342,336, 26,229 left), its
+table unchanged at 73 rows; the 6 KB over the 2026-10-03 figure (3,309,955) comes from the firmware that landed on
+release/increment-4 since then (the dance view, the cmd message), not from this batch, whose rows and pool names
+all sit inside SPLASH_BIG. No further 20 or 40 cell creature may go in the shared table without the 16 MB layout.
 
 ## Increments (each: bench first, operator look, then firmware)
 
