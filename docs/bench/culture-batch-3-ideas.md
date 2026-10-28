@@ -90,7 +90,7 @@ The lab:
     creature pats the rack, the row goes green, it nods. 40, 28, 44,800, big.
 26. * echo gpu fan. A big fan behind the creature spins up from still to a blur, the antenna bends back in the
     wind, heat shimmer lines rise, it spins down. 40, 28, 44,800, big.
-27. * echo slack ping. A chat bubble with a single dot pops in at the top right, the creature perks up, the
+27. * echo chat ping. A chat bubble with a single dot pops in at the top right, the creature perks up, the
     antenna pings, the dot count climbs to three, the creature slumps. 40, 26, 41,600, big.
 28. echo laptop bag. The creature closes a laptop and zips it into a bag. Dropped: three props in 40 cells
     crowd the creature out.
