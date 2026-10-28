@@ -12,12 +12,14 @@
   // pose repeated exactly 2 times across and down, moved 3 rows down so the slump has room.
   //   rest      the family's slit eyes, a blink.
   //   unimpressed  the eyes go flat (each a bar 4 wide and 2 tall on the band's bottom), a long beat.
-  //   palm      the family's right arm stub stays as the upper arm and a forearm runs from its elbow to an open hand:
-  //             a palm 14 wide and 6 tall with four fingers pointing up, outlined in the eyes' dark wherever it lies over
-  //             the body, so the fingers stand apart. It rises from the chest in three slow steps and lands over the visor, the band's two ends
-  //             still showing either side; three pale marks flick out at the moment it lands.
-  //   slump     the torso sinks two rows over planted legs and the antenna droops to the left, its tip dimmed.
-  //   hold      the long hold, most of two seconds: one slow sigh (the torso rises a row and sinks back) and a small
+  //   palm      the family's right arm stub, with its hand cells, stays as the upper arm, and a forearm rises from its
+  //             end diagonally up to an open hand seen flat: a solid block 7 wide and 8 tall with four short finger
+  //             strokes along its top split by one cell dark gaps and a thumb nub on its left side, outlined in the
+  //             eyes' dark wherever it lies over the body. It rises from the chest in three slow steps and lands over
+  //             the right of the visor, covering that eye, a sliver of the band showing at its far right end; three
+  //             pale strokes flick up over the fingers as it lands.
+  //   slump     the whole body drops a row and the antenna droops over to the left, its tip dimmed.
+  //   hold      the long hold, most of two seconds: one slow sigh (the body rises back a row and drops again) and a small
   //             pale puff drifting out from under the hand.
   //   slide     the hand slides down the face, showing the eyes shut flat, drops away to the arm stub, and the head
   //             comes back up with the eyes flat; a slow blink, the rest.
@@ -37,9 +39,9 @@
     const EYE_C = [14 + OX, 26 + OX];                              // each slit's left col, 2 wide
     const HIPS = 27 + OY;                                          // the body's last row; the legs hang below it
     const ANT_C = 30 + OX;                                         // the antenna's left col
-    const ELBOW = [18.5 + OY, 34 + OX];                            // the bottom of the right arm stub
-    const PALM = {w: 14, h: 6, l: 14 + OX};                        // over the visor: cols 14..27, rows top-1..bot+1
-    const FORE_R = 1.7;
+    const ELBOW = [23.5 + OY, 34.5 + OX];                          // the end of the right arm stub, its hand cells
+    const PALM = {w: 7, h: 8, l: 21 + OX};                         // over the visor: cols 21..27, rows top-3..bot+1
+    const FORE_R = 1.6;
 
     const blank = () => Array.from({length: N}, () => new Array(N).fill(0));
     const copy = g => g.map(row => row.slice());
@@ -79,43 +81,44 @@
       for (const [r, a, b] of DROOP[amount]) for (let c = a; c <= b; c++) put(g, r + OY, c + OX, BODY);
       return g;
     }
-    // The open hand: a palm with its top left at (r0, c0) and four fingers 2 wide up from its top, a gap between
-    // each; a one cell dark outline wherever it lies over the creature, so the fingers stand apart, and a forearm from
-    // the elbow to the wrist at the palm's lower right, outlined the same way.
+    // The open hand, seen flat: a solid block 7 wide and 8 tall with its top left at (r0, c0), its top two rows cut
+    // into four finger strokes 1 wide by one cell dark gaps, and a thumb nub 2 tall off its left side. The forearm
+    // rises from the end of the family's right arm stub (the stub and its hand cells are the upper arm) diagonally up
+    // to the wrist at the palm's lower right. A one cell dark outline goes round hand and forearm wherever they lie
+    // over the creature.
     function hand(g, r0, c0) {
       const under = copy(g);
-      for (let r = 20 + OY; r <= 21 + OY; r++) for (let c = 34 + OX; c <= 35 + OX; c++) g[r][c] = 0;   // the stub's hand
       const mine = blank();
       for (let r = r0; r < r0 + PALM.h; r++) for (let c = c0; c < c0 + PALM.w; c++) {
-        const corner = (r === r0 + PALM.h - 1) && (c === c0 || c === c0 + PALM.w - 1);
-        if (!corner) put(mine, r, c, 1);
+        const gap = r < r0 + 2 && (c - c0) % 2 === 1;
+        if (!gap) put(mine, r, c, 1);
       }
-      for (let f = 0; f < 4; f++) for (let r = r0 - 2; r < r0; r++) for (let k = 0; k < 2; k++) put(mine, r, c0 + 1 + 3 * f + k, 1);
-      put(mine, r0 - 2, c0 + 1, 0); put(mine, r0 - 2, c0 + 11, 0);                     // the outer fingers shorter
-      const wrist = [r0 + PALM.h - 0.5, c0 + PALM.w - 2];
+      for (let r = r0 + 4; r <= r0 + 5; r++) put(mine, r, c0 - 1, 1);                   // the thumb nub
+      const wrist = [r0 + PALM.h - 0.5, c0 + PALM.w - 0.5];
       for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (seg(r + 0.5, c + 0.5, ELBOW, wrist) <= FORE_R) mine[r][c] = 1;
       for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
         if (mine[r][c]) { g[r][c] = BODY; continue; }
         let near = false;
         for (let a = -1; a <= 1 && !near; a++) for (let b = -1; b <= 1; b++) if (inside(r + a, c + b) && mine[r + a][c + b]) { near = true; break; }
-        if (near && under[r][c]) g[r][c] = EYE;
+        // the finger gaps are dark wherever they are, so the four strokes always read
+        const fingerGap = r >= r0 && r < r0 + 2 && c > c0 && c < c0 + PALM.w - 1;
+        if ((near && under[r][c]) || fingerGap) g[r][c] = EYE;
       }
       return g;
     }
-    // The torso moved down d rows over planted legs (the legs' top rows go under it).
+    // The slump: the whole creature down d rows (0 or 1).
     function sink(g, d) {
       if (!d) return g;
       const out = blank();
-      for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (g[r][c] && r > HIPS) out[r][c] = g[r][c];
-      for (let r = 0; r <= HIPS; r++) for (let c = 0; c < N; c++) if (g[r][c]) put(out, r + d, c, g[r][c]);
+      for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (g[r][c]) put(out, r + d, c, g[r][c]);
       return out;
     }
-    // Pale marks: three short strokes flicking out from the hand's upper left when it lands.
+    // Pale marks: three short strokes flicking up over the fingers when the hand lands.
     function marks(g) {
-      for (const [r, c] of [[V.top - 4, 11], [V.top - 5, 10], [V.top - 2, 9], [V.top - 2, 8], [V.top - 6, 14], [V.top - 7, 14]]) if (inside(r, c) && !g[r][c]) g[r][c] = PALE;
+      const r0 = V.top - 3, c0 = PALM.l;
+      for (const [r, c] of [[r0 - 2, c0 - 1], [r0 - 3, c0 - 1], [r0 - 3, c0 + 3], [r0 - 4, c0 + 3], [r0 - 2, c0 + 7], [r0 - 3, c0 + 7]]) if (inside(r, c) && !g[r][c]) g[r][c] = PALE;
       return g;
-    }
-    // The sigh: a small puff of three to five cells drifting left from under the hand, step 0..2.
+    }    // The sigh: a small puff of three to five cells drifting left from under the hand, step 0..2.
     function puff(g, step) {
       const r = V.bot + 4 - step, c = 8 - 2 * step;
       const cells = step === 2 ? [[0, 0], [0, 1]] : [[0, 0], [0, 1], [-1, 0], [-1, 1], [0, -1]];
@@ -129,7 +132,7 @@
       let c = creature(!!o.ping && !o.droop);
       (o.face || slits)(c);
       if (o.droop) droop(c, o.droop);
-      if (o.at) hand(c, V.top - 1 + o.at[0], PALM.l + o.at[1]);
+      if (o.at) hand(c, V.top - 3 + o.at[0], PALM.l + o.at[1]);
       c = sink(c, o.sink || 0);
       if (o.mark) marks(c);
       if (o.puff !== undefined) puff(c, o.puff);
@@ -145,21 +148,21 @@
     // 2. The palm rises in three slow steps and lands over the visor; marks flick out.
     F(260, {face: flat, at: [11, 5]}); F(260, {face: flat, at: [6, 3]}); F(240, {face: flat, at: [2, 1]});
     F(140, {face: shut, at: ON, mark: true});
-    // 3. Slump: the torso sinks, the antenna droops.
+    // 3. Slump: the whole body drops a row, the antenna droops.
     F(260, {face: shut, at: ON, sink: 1, droop: 1});
-    F(400, {face: shut, at: ON, sink: 2, droop: 2});
-    // 4. The long hold: a slow sigh and a puff.
-    F(400, {face: shut, at: ON, sink: 2, droop: 2});
     F(400, {face: shut, at: ON, sink: 1, droop: 2});
-    F(400, {face: shut, at: ON, sink: 2, droop: 2, puff: 0});
-    F(400, {face: shut, at: ON, sink: 2, droop: 2, puff: 1});
-    F(400, {face: shut, at: ON, sink: 2, droop: 2, puff: 2});
-    F(400, {face: shut, at: ON, sink: 2, droop: 2});
+    // 4. The long hold: a slow sigh and a puff.
+    F(400, {face: shut, at: ON, sink: 1, droop: 2});
+    F(400, {face: shut, at: ON, sink: 0, droop: 2});
+    F(400, {face: shut, at: ON, sink: 1, droop: 2, puff: 0});
+    F(400, {face: shut, at: ON, sink: 1, droop: 2, puff: 1});
+    F(400, {face: shut, at: ON, sink: 1, droop: 2, puff: 2});
+    F(400, {face: shut, at: ON, sink: 1, droop: 2});
     // 5. Slide: the hand drags down the face, the eyes shut flat behind it, then drops away and the head comes up.
-    F(300, {face: shut, at: [3, 0], sink: 2, droop: 2});
-    F(300, {face: shut, at: [6, 1], sink: 2, droop: 1});
-    F(240, {face: flat, at: [10, 4], sink: 1, droop: 1});
-    F(300, {face: flat, sink: 1});
+    F(300, {face: shut, at: [3, 0], sink: 1, droop: 2});
+    F(300, {face: shut, at: [6, 1], sink: 1, droop: 1});
+    F(240, {face: flat, at: [10, 4], droop: 1});
+    F(300, {face: flat});
     F(400, {face: flat});
     F(160, {face: blinked}); F(400, {face: flat});
     F(160, {face: blinked}); F(400);
@@ -169,7 +172,7 @@
       name: 'ECHO · facepalm', key: 'echo_facepalm', fwname: 'echo facepalm', category: 'Idle', size: N,
       // Big tier: 27 frames of 1600 bytes (43200 bytes) ship only on boards built with SPLASH_BIG.
       tier: 'big',
-      intent: 'Proposal, the facepalm gesture (no words, no one\'s art), 40 cell lattice (12 px cells, the creature at 2x): the creature rests and blinks, its eyes go flat and unimpressed, then its right hand comes slowly up from its chest in three steps, an open palm with four fingers up, and lands over its visor with three small marks flicking out, the band\'s ends still showing either side; its torso sinks two rows and its antenna droops over, it holds there most of two seconds with one slow sigh and a small puff, then the hand drags down its face over eyes shut flat, drops away, and the head comes back up still unimpressed, a slow blink, the rest; judge whether the open hand reads as a hand over the face, whether the hold reads as weary rather than still, and whether it is still this creature.',
+      intent: 'Proposal, the facepalm gesture (no words, no one\'s art), 40 cell lattice (12 px cells, the creature at 2x): the creature rests and blinks, its eyes go flat and unimpressed, then its right forearm rises diagonally from the arm stub in three slow steps to an open palm seen flat, four short fingers and a thumb nub, that lands over the right of its visor with three small strokes flicking up, a sliver of the band showing past it; its whole body drops a row and its antenna droops over, it holds there most of two seconds with one slow sigh and a small puff, then the hand drags down its face over eyes shut flat, drops away, and the head comes back up still unimpressed, a slow blink, the rest; judge whether the open hand reads as a hand over the face, whether the hold reads as weary rather than still, and whether it is still this creature.',
       // 0 transparent, 1 body, 2 eyes (also the hand's outline), 3 visor, 4 ping, 5 feet, 6 pale
       // (the sigh puff, the marks)
       palette: [...ECHO_PALETTE.slice(0, 6), '#cfeee8'],
