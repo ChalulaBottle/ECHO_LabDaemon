@@ -69,13 +69,59 @@
 >
 > The HD set is drawn on a 60 cell lattice of 8 px cells and lives in the big tier, on the 4 inch board only: mushroom hd with dilated black pupils and a sky, breakdance hd with a headspin on the antenna and its b take with a windmill, acrobat hd running a gymnast pass (cartwheel, back handspring, backflip, stuck landing), moonwalk hd with a lean and a fedora in a seamless 20 frame clip and its b take with a wrap, rave bunny hd with hands up through lasers, a build, a blackout and a drop with strobe and confetti, and its b take bouncing. Captures from the panel are in `docs/media/lcd4/`.
 >
+> **Culture**, the ECHO creature in famous paintings, memes and pop culture moments (batch one, 2026-10-03, 60 cell lattice; public domain works credited by maker, title and date, everything else lends its format only):
+>
+> | echo starry night | echo scream | echo great wave | echo mona lisa |
+> |---|---|---|---|
+> | ![](docs/media/culture/starry_night.gif) | ![](docs/media/culture/scream.gif) | ![](docs/media/culture/great_wave.gif) | ![](docs/media/culture/mona_lisa.gif) |
+>
+> | echo pearl earring | echo creation | echo vitruvian | echo thinker |
+> |---|---|---|---|
+> | ![](docs/media/culture/pearl_earring.gif) | ![](docs/media/culture/creation.gif) | ![](docs/media/culture/vitruvian.gif) | ![](docs/media/culture/thinker.gif) |
+>
+> | echo melting clock | echo this is fine | echo distracted | echo galaxy brain |
+> |---|---|---|---|
+> | ![](docs/media/culture/melting_clock.gif) | ![](docs/media/culture/this_is_fine.gif) | ![](docs/media/culture/distracted.gif) | ![](docs/media/culture/galaxy_brain.gif) |
+>
+> | echo stonks | echo slow dodge | echo saber duel | echo crosswalk |
+> |---|---|---|---|
+> | ![](docs/media/culture/stonks.gif) | ![](docs/media/culture/slow_dodge.gif) | ![](docs/media/culture/saber_duel.gif) | ![](docs/media/culture/crosswalk.gif) |
+>
+> **Culture batch three** (2026-10-28, 40 cell lattice of 12 px cells, the creature at 2x, every cell under 52 KB of frame data so twenty five fit the 4 inch board's partition; ideas and the budget in [`docs/bench/culture-batch-3-ideas.md`](docs/bench/culture-batch-3-ideas.md)):
+>
+> Six paintings, public domain, credited by maker, title and date:
+>
+> | echo wanderer | echo sunflowers | echo water lilies | echo last supper | echo napoleon |
+> |---|---|---|---|---|
+> | ![](docs/media/anims/echo_wanderer.gif) | ![](docs/media/anims/echo_sunflowers.gif) | ![](docs/media/anims/echo_water_lilies.gif) | ![](docs/media/anims/echo_last_supper.gif) | ![](docs/media/anims/echo_napoleon.gif) |
+>
+> | echo birth of venus | echo two buttons | echo mind blown | echo facepalm | echo mic drop |
+> |---|---|---|---|---|
+> | ![](docs/media/anims/echo_birth_of_venus.gif) | ![](docs/media/anims/echo_two_buttons.gif) | ![](docs/media/anims/echo_mind_blown.gif) | ![](docs/media/anims/echo_facepalm.gif) | ![](docs/media/anims/echo_mic_drop.gif) |
+>
+> Formats only (a gesture, a setting, never a character or a caption), then the lab, the range and October:
+>
+> | echo deal with it | echo kaiju | echo flag capture | echo packet sniff | echo hash cracked |
+> |---|---|---|---|---|
+> | ![](docs/media/anims/echo_deal_with_it.gif) | ![](docs/media/anims/echo_kaiju.gif) | ![](docs/media/anims/echo_flag_capture.gif) | ![](docs/media/anims/echo_packet_sniff.gif) | ![](docs/media/anims/echo_hash_cracked.gif) |
+>
+> | echo terminal glow | echo pumpkin | echo ghost sheet | echo countdown | echo server rack |
+> |---|---|---|---|---|
+> | ![](docs/media/anims/echo_terminal_glow.gif) | ![](docs/media/anims/echo_pumpkin.gif) | ![](docs/media/anims/echo_ghost_sheet.gif) | ![](docs/media/anims/echo_countdown.gif) | ![](docs/media/anims/echo_server_rack.gif) |
+>
+> | echo gpu fan | echo chat ping | echo sleepy | echo curious | echo focused |
+> |---|---|---|---|---|
+> | ![](docs/media/anims/echo_gpu_fan.gif) | ![](docs/media/anims/echo_chat_ping.gif) | ![](docs/media/anims/echo_sleepy.gif) | ![](docs/media/anims/echo_curious.gif) | ![](docs/media/anims/echo_focused.gif) |
+>
+> The last three are moods for the idle rotation. Every culture creature is big tier and sits in the splash's wildcard pool on boards built with SPLASH_BIG; frame sheets of every loop are in `docs/media/sheets/` (made with `tools/anim_sheet.py`).
+>
 > **Model tiers**, one family, four signatures (Haiku, Sonnet, Opus, Fable):
 >
 > ![Model tier creatures](docs/media/sheets/model-tiers.png)
 >
 > Plus the thinking set (echo think spin, echo think deep, echo work, echo write, echo read) and the
 > modes (opus enter, opus work, ultracode enter, ultracode work, agents split, agents join).
-> 83 animations in the 4 inch board's firmware table as of 2026-10-01 (73 on boards built without the big tier); every one plays by name from the host (`a` field).
+> 83 animations are on the 4 inch board as of 2026-10-01; the next flash carries 124 (the sixteen culture creatures of batch one and the twenty five of batch three, 73 on boards built without the big tier); every one plays by name from the host (`a` field).
 >
 > Full progress board with states: [chalulabottle.github.io/ECHO_LabDaemon#creatures](https://chalulabottle.github.io/ECHO_LabDaemon/#creatures).
 >

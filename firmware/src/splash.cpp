@@ -87,6 +87,14 @@ static const char* WILD_NAMES[] = {
     "echo great wave", "echo melting clock", "echo mona lisa", "echo pearl earring",
     "echo saber duel", "echo scream", "echo slow dodge", "echo starry night",
     "echo stonks", "echo thinker", "echo this is fine", "echo vitruvian",
+    // Culture batch three (docs/bench/anims_culture_*.js, anims_lab_*.js, anims_mood_*.js,
+    // 2026-10-28): six more paintings, six formats, the lab and the range, October, and
+    // three moods, drawn on the 40 cell lattice, all big tier.
+    "echo wanderer", "echo sunflowers", "echo water lilies", "echo last supper", "echo napoleon",
+    "echo birth of venus", "echo two buttons", "echo mind blown", "echo facepalm", "echo mic drop",
+    "echo deal with it", "echo kaiju", "echo flag capture", "echo packet sniff", "echo hash cracked",
+    "echo terminal glow", "echo pumpkin", "echo ghost sheet", "echo countdown", "echo server rack",
+    "echo gpu fan", "echo chat ping", "echo sleepy", "echo curious", "echo focused",
 #endif
 };
 #define WILD_MAX (sizeof(WILD_NAMES) / sizeof(WILD_NAMES[0]))
