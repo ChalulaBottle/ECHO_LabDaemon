@@ -22,13 +22,14 @@
   //             and right behind the middle diner's head, dark hangings down both side walls.
   //   table     a long white cloth from edge to edge with loaves and cups on it, its front hanging in folds, the
   //             diners' feet in the shade under it, an ochre floor.
-  //   spread    the middle diner's antenna pings and its arms spread down to the table in a triangle, as in the
-  //             painting; they stay spread while the ripple runs.
-  //   ripple    a wave of gestures runs out from the middle to both ends and back: each diner it reaches jumps up a
-  //             row, the ones in front throwing both hands up (pale), the ones behind pinging with their eyes wide,
-  //             and sits again as the wave moves on.
+  //   spread    the middle diner's antenna pings and it flings its arms straight out, three cells each side, held
+  //             for three frames, then lays them down on the table in a triangle, as in the painting; they stay
+  //             there while the ripple runs.
+  //   ripple    a rolling bump of gestures runs out from the middle to both ends and back: the diner at its crest
+  //             jumps two rows, the ones in front throwing both hands up (pale), the ones behind pinging with their
+  //             eyes wide, and the diners either side of it rise a row, so the bump reads as one wave moving along.
   //   settle    the middle diner's arms come back in and everyone sits still; a blink here and there.
-  // Loop: 26 frames, 5.8 s. Every diner sits at rest on the first and last frames, so the last runs into the first
+  // Loop: 27 frames, 6.2 s. Every diner sits at rest on the first and last frames, so the last runs into the first
   // without a seam.
   // Palette: 0..5 the ECHO palette unchanged (5 is also the deep teal diners and the feet); 6 the white cloth (also
   // the raised hands), 7 the windows' sky (also the cloth's folds), 8 the ochre wall, floor and loaves, 9 umber
@@ -87,6 +88,10 @@
       if (o.hands) for (const c of [c0, c0 + 3]) for (let r = h - 3; r <= h - 1; r++) put(g, r, c, CLOTH);
       for (const c of [c0, c0 + 3]) { put(g, 33, c, DEEP); put(g, 34, c, DEEP); }   // feet under the table
     }
+    // The middle diner's arms flung straight out, three cells each side and two rows thick, from the shoulders.
+    function flung(g) {
+      for (let r = MIDH + 3; r <= MIDH + 4; r++) for (let s = 1; s <= 3; s++) { put(g, r, MIDC - s, BODY); put(g, r, MIDC + 3 + s, BODY); }
+    }
     // The middle diner's arms, spread down to the table in a triangle: k steps of two rows, a col out each step.
     function arms(g, k) {
       const sh = MIDH + 3;
@@ -94,18 +99,21 @@
       if (k >= 3) { put(g, TOP, MIDC - 3, BODY); put(g, TOP, MIDC - 4, BODY); put(g, TOP, MIDC + 6, BODY); put(g, TOP, MIDC + 7, BODY); }   // the hands flat on the cloth
     }
 
-    // A scene. o: w (the wave's distance out from the middle in cols, or null), spread (the arms' reach, 0..3), ping
+    // A scene. o: w (the wave's distance out from the middle in cols, or null), spread (the arms' reach, 0..3), flung
+    // (the arms straight out), ping
     // (the middle one's antenna), blinks (the diners blinking, by index).
     function scene(o) {
       const g = blank();
       room(g);
       DINERS.forEach(([c0, h, tone, behind], i) => {
         const d = Math.abs(c0 + 1.5 - 19.5), mid = c0 === MIDC;
-        const hit = !mid && o.w !== undefined && Math.abs(o.w - d) < 1.1;
-        diner(g, c0, h, tone, {up: hit ? 1 : 0, hands: hit && !behind, ping: (hit && behind) || (mid && o.ping), wide: hit && behind, blink: (o.blinks || []).includes(i)});
+        const off = !mid && o.w !== undefined ? Math.abs(o.w - d) : 99;
+        const hit = off < 1.1, up = hit ? 2 : off < 3.1 ? 1 : 0;   // the bump: two rows at its crest, one on its shoulders
+        diner(g, c0, h, tone, {up, hands: hit && !behind, ping: (hit && behind) || (mid && o.ping), wide: hit && behind, blink: (o.blinks || []).includes(i)});
       });
       table(g);
       if (o.spread) arms(g, o.spread);
+      if (o.flung) flung(g);
       return g;
     }
 
@@ -115,8 +123,8 @@
     const OUT = [5, 7, 9, 11.5, 14, 16, 18];                       // the wave's stops: every diner's distance from the middle
     // 1. Rest: everyone seated; a blink or two.
     F(320); F(320); F(100, {blinks: [1, 8]}); F(320);
-    // 2. The middle one pings and spreads its arms down to the table.
-    F(260, {ping: true}); F(220, {ping: true, spread: 1}); F(220, {spread: 2}); F(260, {spread: 3});
+    // 2. The middle one pings, flings its arms straight out and holds them there, then lays them down on the table.
+    F(240, {ping: true}); F(300, {ping: true, flung: true}); F(300, {flung: true}); F(300, {flung: true}); F(240, {spread: 3});
     // 3. The ripple: out to both ends a diner a step, and back.
     for (const w of OUT) F(200, {spread: 3, w});
     for (const w of OUT.slice(0, -1).reverse()) F(200, {spread: 3, w});
@@ -125,9 +133,9 @@
 
     const frames = specs.map(({hold, o}) => ({hold, grid: scene(o)}));    return {
       name: 'ECHO · last supper', key: 'echo_last_supper', fwname: 'echo last supper', category: 'Active', size: N,
-      // Big tier: 26 frames of 1600 cells are 41600 bytes of firmware table, so it ships only on boards built with SPLASH_BIG.
+      // Big tier: 27 frames of 1600 cells are 43200 bytes of firmware table, so it ships only on boards built with SPLASH_BIG.
       tier: 'big',
-      intent: 'Proposal after Leonardo da Vinci, The Last Supper (about 1495 to 1498), 40 cell lattice (12 px cells): thirteen small ECHO creatures, each the family four cells wide with an antenna, a visor row whose ends are its eyes and feet under the table, sit behind a long white cloth in four groups of three (two in front, one behind and higher) round a middle one framed by the bright middle window, under an umber coffered ceiling with dark hangings down the side walls; the middle one pings and spreads its arms down to the table, a ripple of gestures runs out to both ends and back, each diner jumping up a row and either throwing its pale hands up or pinging with its eyes wide, then the arms come in and they all sit still; judge whether thirteen diners read at a glance as the painting, whether each still reads as this creature at four cells wide, and whether the ripple reads as one wave out and back.',
+      intent: 'Proposal after Leonardo da Vinci, The Last Supper (about 1495 to 1498), 40 cell lattice (12 px cells): thirteen small ECHO creatures, each the family four cells wide with an antenna, a visor row whose ends are its eyes and feet under the table, sit behind a long white cloth in four groups of three (two in front, one behind and higher) round a middle one framed by the bright middle window, under an umber coffered ceiling with dark hangings down the side walls; the middle one pings, flings its arms straight out three cells each side and holds them, then lays them on the table, and a rolling bump of gestures runs out to both ends and back, the diner at its crest jumping two rows and either throwing its pale hands up or pinging with its eyes wide while its neighbours rise a row, then the arms come in and they all sit still; judge whether thirteen diners read at a glance as the painting, whether each still reads as this creature at four cells wide, and whether the bump reads as one wave rolling out and back.',
       // 0 transparent, 1 body, 2 eyes, 3 visor, 4 ping, 5 deep teal (every other diner, the feet), 6 the white cloth
       // (also the raised hands, the loaves are ochre on it), 7 the windows' sky (also the cloth's folds), 8 ochre wall
       // and floor, 9 umber (ceiling, hangings, the shade under the table, the cups)
