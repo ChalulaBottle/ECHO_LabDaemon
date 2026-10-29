@@ -1,15 +1,19 @@
 cff-version: 1.2.0
-message: "If you use or build on ECHO_LabDaemon, please cite it as below and credit Clawdmeter, which inspired it."
+message: "If you use or build on ECHO_LabDaemon, please cite it as below (published by ECHO Club, https://echoclub.org, under Protocol 973) and credit Clawdmeter, which inspired it."
 type: software
 title: "ECHO_LabDaemon"
-abstract: "A 4 inch desk screen for the Waveshare ESP32-S3-Touch-LCD-4 that shows Claude Code usage, the playing track with a dancing creature, notifications and host pages driven by the LabDaemon Engine, a Windows service with a browser dashboard and an MCP server. Created and designed by Digital Orukami, inspired by Clawdmeter by Hermann Bjorgvin."
+abstract: "A 4 inch desk screen for the Waveshare ESP32-S3-Touch-LCD-4 that shows Claude Code usage, the playing track with a dancing creature, notifications and host pages driven by the LabDaemon Engine, a Windows service with a browser dashboard and an MCP server. Created and designed by Digital Orukami for ECHO Club (https://echoclub.org), inspired by Clawdmeter by Hermann Bjorgvin."
 authors:
   - family-names: Orukami
     given-names: Digital
+    affiliation: "ECHO Club"
+  - name: "ECHO Club"
+    website: "https://echoclub.org"
 date-released: 2026-09-27
 url: "https://chalulabottle.github.io/ECHO_LabDaemon/"
 repository-code: "https://github.com/ChalulaBottle/ECHO_LabDaemon"
 keywords:
+  - ECHO Club
   - ESP32-S3
   - Claude Code
   - desk display
