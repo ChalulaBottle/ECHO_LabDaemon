@@ -404,7 +404,7 @@ def test_model_switch_outranks_the_transcript(fire, tmp_path):
 def test_working_creature_wins_over_the_tier_while_tools_run(fire, tmp_path):
     t = _transcript(tmp_path / "t.jsonl", ("claude-fable-5", 1_000))
     assert fire("UserPromptSubmit", at=0, transcript_path=t)["anim"] == "model fable"
-    assert fire("PreToolUse", at=4, transcript_path=t, tool_name="Edit")["anim"] == "echo write"
+    assert fire("PreToolUse", at=4, transcript_path=t, tool_name="Edit")["anim"] == "fable write"
 
 
 # Tier aware creatures (TIER_ANIMS)
@@ -412,7 +412,7 @@ def test_working_creature_wins_over_the_tier_while_tools_run(fire, tmp_path):
 def test_fable_thinks_in_fable_gaze_after_its_signature(fire):
     assert fire("SessionStart", at=0, source="startup", model="claude-fable-5")["anim"] == "model fable"
     assert fire("UserPromptSubmit", at=5, prompt="hi")["anim"] == "model fable"      # the first prompt: the signature
-    assert fire("Stop", at=10)["anim"] == "job done"
+    assert fire("Stop", at=10)["anim"] == "fable done"
     assert fire("UserPromptSubmit", at=15, prompt="go on")["anim"] == "fable gaze"
     assert fire("UserPromptSubmit", at=20, prompt="and")["anim"] == "fable gaze"
     # a new session signs again
@@ -494,6 +494,42 @@ def test_a_late_model_switch_shows_nothing(fire):
     fire("UserPromptSubmit", at=10)
     assert fire("PostModelSwitch", at=5, to_model="claude-fable-5")["anim"] == "echo think spin"
     assert fire("UserPromptSubmit", at=20)["anim"] == "fable gaze"   # its tier still counts
+
+
+@pytest.mark.parametrize("tool, tool_input, anim", [
+    ("Edit", {}, "fable write"), ("Write", {}, "fable write"), ("MultiEdit", {}, "fable write"),
+    ("NotebookEdit", {}, "fable write"),
+    ("Read", {}, "fable read"), ("Glob", {}, "fable read"), ("Grep", {}, "fable read"),
+    ("Bash", {"command": "npm test"}, "fable work"), ("PowerShell", {"command": "ls"}, "fable work"),
+    ("TodoWrite", {}, "fable work"),                                   # anything else
+    ("Bash", {"command": "ssh fox-pool"}, "echo ssh"),                 # the same on every tier
+    ("WebFetch", {}, "echo consult"), ("Skill", {}, "echo loading"),
+])
+def test_fable_works_in_its_own_working_set(fire, tool, tool_input, anim):
+    fire("SessionStart", at=0, source="startup", model="claude-fable-5")
+    assert fire("PreToolUse", at=5, tool_name=tool, tool_input=tool_input)["anim"] == anim
+
+
+def test_fable_stop_is_fable_done_and_the_next_event_clears_it(fire):
+    fire("SessionStart", at=0, source="startup", model="claude-fable-5")
+    assert fire("Stop", at=5) == {"agents": 0, "anim": "fable done", "mode": "done"}
+    assert fire("PreToolUse", at=6, tool_name="Read") == {"agents": 0, "anim": "fable read", "mode": ""}
+
+
+@pytest.mark.parametrize("model", ["claude-opus-5", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"])
+def test_other_tiers_keep_the_echo_working_set(fire, model):
+    fire("SessionStart", at=0, source="startup", model=model)
+    assert fire("PreToolUse", at=5, tool_name="Edit")["anim"] == "echo write"
+    assert fire("PreToolUse", at=10, tool_name="Read")["anim"] == "echo read"
+    assert fire("PreToolUse", at=15, tool_name="Bash", tool_input={"command": "ls"})["anim"] == "echo work"
+    assert fire("Stop", at=20)["anim"] == "job done"
+
+
+def test_a_switch_to_fable_mid_turn_moves_the_working_set(fire):
+    fire("SessionStart", at=0, source="startup", model="claude-opus-5")
+    assert fire("PreToolUse", at=5, tool_name="Edit")["anim"] == "echo write"
+    fire("PostModelSwitch", at=6, to_model="claude-fable-5")
+    assert fire("PreToolUse", at=10, tool_name="Edit")["anim"] == "fable write"
 
 
 def test_transcript_tail_finds_the_newest_reply_and_its_tokens(tmp_path):
@@ -834,7 +870,8 @@ def test_every_name_the_hooks_can_send_is_in_the_firmware_table():
               hooks.ULTRA_WORK, hooks.JOB_DONE, hooks.BURNER, hooks.CTF}
     picked |= {anim for _, anim in hooks.MODEL_TIERS}
     picked |= {hooks.tier_anim(tier, role, "")
-               for _, tier in hooks.MODEL_TIERS for role in ("think", "ultra", "switch")} - {""}
+               for _, tier in hooks.MODEL_TIERS
+               for role in ("think", "ultra", "switch", *hooks.TIER_ROLES.values())} - {""}
     picked |= {hooks.tool_anim(t, {"command": c})
                for t in ("Edit", "Read", "Bash", "PowerShell", "WebFetch", "Skill", "Other")
                for c in ("ls", "ssh host")}

@@ -35,6 +35,8 @@ PreToolUse            Edit Write MultiEdit NotebookEdit: "echo write"
                       Read Glob Grep: "echo read"
                       Bash PowerShell: "echo work"; "echo ssh" when the command
                       runs ssh, scp or sftp
+                      on fable those three are "fable write", "fable read" and
+                      "fable work" (anything else too); "echo ssh" stays
                       WebFetch WebSearch: "echo consult"; Skill: "echo loading"
                       Agent Task: "two agents" (ultracode work from 3 agents up)
                       Workflow: "ultracode enter", then ultracode work on every
@@ -42,14 +44,15 @@ PreToolUse            Edit Write MultiEdit NotebookEdit: "echo write"
                       ultracode work is "fable ultra", "opus ultra" or "sonnet
                       ultra" on those tiers, "ultracode work" on haiku or an
                       unknown tier
-                      anything else: "echo work"
+                      anything else: "echo work" ("fable work" on fable)
                       inside a subagent (agent_id set): the agents creature
                       the first call after the token reading crosses 500k:
                       "token burner"
 PostToolUse           nothing of its own (wired for Agent and Task only)
 SubagentStart, Stop   count running subagents (the N AGENTS badge); "agents join"
                       when the last one finishes
-Stop                  "job done" plus mode word "done"; the next event of any kind
+Stop                  "job done" ("fable done" on fable) plus mode word "done"; the
+                      next event of any kind
                       clears it. Not while this session still has agents running,
                       nor right after launching a workflow whose agents are not up yet
 Notification          idle_prompt: back to the device's choice (also covers Esc,
@@ -147,14 +150,21 @@ MODEL_TIERS = (("haiku", "model haiku"), ("sonnet", "model sonnet"),
                ("opus", "model opus"), ("fable", "model fable"))
 # The tier's own creature for a moment, by tier creature and role: "think" at
 # a prompt after the session's first (the first keeps the tier creature, the
-# signature), "ultra" for ultracode work, "switch" for a PostModelSwitch to it.
-# A missing role falls back to the tier creature (think, switch) or to
-# ULTRA_WORK (ultra). Haiku has none of its own.
+# signature), "ultra" for ultracode work, "switch" for a PostModelSwitch to it,
+# and the working set of TIER_ROLES ("write", "read", "work", "done"). A missing
+# role falls back to the tier creature (think, switch), to ULTRA_WORK (ultra)
+# or to the plain creature it stands in for (the working set). Haiku has none
+# of its own; "opus work" and the like are one entry each when their cells exist.
 TIER_ANIMS = {
-    "model fable": {"think": "fable gaze", "ultra": "fable ultra", "switch": "fable eyes"},
+    "model fable": {"think": "fable gaze", "ultra": "fable ultra", "switch": "fable eyes",
+                    "write": "fable write", "read": "fable read", "work": "fable work",
+                    "done": "fable done"},
     "model opus": {"ultra": "opus ultra"},
     "model sonnet": {"ultra": "sonnet ultra"},
 }
+# The plain creatures a tier can stand in for, by role. Not ssh, consult,
+# loading, the agents names or the burner: those stay the same on every tier.
+TIER_ROLES = {WRITE: "write", READ: "read", WORK: "work", JOB_DONE: "done"}
 TIER_NAMES = frozenset(a for _, a in MODEL_TIERS)
 ANIMS = frozenset({THINK, WRITE, READ, WORK, SSH, CONSULT, LOADING, TWO_AGENTS, AGENTS_JOIN,
                    ULTRA_ENTER, ULTRA_WORK, JOB_DONE, BURNER, CTF} | TIER_NAMES
@@ -787,6 +797,11 @@ class _Run:
         transcript read: agent events come in bursts)."""
         return tier_anim(self.sess.get("model"), "ultra", ULTRA_WORK)
 
+    def tiered(self, anim: str) -> str:
+        """A plain creature of TIER_ROLES in the session's tier (the cached one)."""
+        role = TIER_ROLES.get(anim)
+        return tier_anim(self.sess.get("model"), role, anim) if role else anim
+
     def agents_anim(self, extra: int = 0) -> str:
         if self.ultra_live():
             return self.ultra_work()
@@ -883,7 +898,7 @@ def _on_pre_tool(r: _Run) -> None:
     if crossed:
         r.propose(BURNER, force=True)
         return
-    r.propose(tool_anim(tool, r.p.get("tool_input")))
+    r.propose(r.tiered(tool_anim(tool, r.p.get("tool_input"))))   # r.model() above refreshed the tier
 
 
 def _on_post_tool(r: _Run) -> None:
@@ -917,7 +932,7 @@ def _on_stop(r: _Run) -> None:
         if u["seen"] is None and r.now - u["since"] < ULTRA_GRACE_S:
             return  # the workflow was just launched; its agents are not up yet
         r.ultra_off()
-    r.propose(JOB_DONE, force=True)
+    r.propose(r.tiered(JOB_DONE), force=True)
     r.done = True
 
 
