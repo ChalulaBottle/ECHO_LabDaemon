@@ -407,6 +407,95 @@ def test_working_creature_wins_over_the_tier_while_tools_run(fire, tmp_path):
     assert fire("PreToolUse", at=4, transcript_path=t, tool_name="Edit")["anim"] == "echo write"
 
 
+# Tier aware creatures (TIER_ANIMS)
+
+def test_fable_thinks_in_fable_gaze_after_its_signature(fire):
+    assert fire("SessionStart", at=0, source="startup", model="claude-fable-5")["anim"] == "model fable"
+    assert fire("UserPromptSubmit", at=5, prompt="hi")["anim"] == "model fable"      # the first prompt: the signature
+    assert fire("Stop", at=10)["anim"] == "job done"
+    assert fire("UserPromptSubmit", at=15, prompt="go on")["anim"] == "fable gaze"
+    assert fire("UserPromptSubmit", at=20, prompt="and")["anim"] == "fable gaze"
+    # a new session signs again
+    assert fire("SessionStart", at=30, source="clear", model="claude-fable-5")["anim"] == "model fable"
+    assert fire("UserPromptSubmit", at=35, prompt="hi")["anim"] == "model fable"
+
+
+def test_a_compaction_does_not_bring_the_signature_back(fire):
+    fire("SessionStart", at=0, source="startup", model="claude-fable-5")
+    fire("UserPromptSubmit", at=5)
+    fire("SessionStart", at=10, source="compact")
+    assert fire("UserPromptSubmit", at=15)["anim"] == "fable gaze"
+
+
+def test_fable_with_three_agents_works_in_fable_ultra(fire):
+    fire("SessionStart", at=0, source="startup", model="claude-fable-5")
+    fire("SubagentStart", at=5, agent_id="a1")
+    assert fire("SubagentStart", at=6, agent_id="a2")["anim"] == "two agents"
+    assert fire("SubagentStart", at=10, agent_id="a3") == {"agents": 3, "anim": "fable ultra", "mode": ""}
+    assert fire("PreToolUse", at=15, agent_id="a1", tool_name="Read")["anim"] == "fable ultra"
+
+
+def test_opus_workflow_works_in_opus_ultra(fire):
+    fire("SessionStart", at=0, source="startup", model="claude-opus-5")
+    assert fire("PreToolUse", at=1, tool_name="Workflow")["anim"] == "ultracode enter"
+    assert fire("PreToolUse", at=5, tool_name="Read") == \
+        {"agents": 0, "anim": "opus ultra", "mode": "ultracode"}
+    assert fire("SubagentStart", at=10, agent_id="w1")["anim"] == "opus ultra"
+
+
+def test_sonnet_ultracode_is_sonnet_ultra(fire):
+    fire("SessionStart", at=0, source="startup", model="claude-sonnet-4-6")
+    assert fire("UserPromptSubmit", at=5)["anim"] == "model sonnet"
+    assert fire("UserPromptSubmit", at=10)["anim"] == "model sonnet"   # no thinking creature of its own
+    fire("SubagentStart", at=11, agent_id="a1")
+    fire("SubagentStart", at=12, agent_id="a2")
+    assert fire("PreToolUse", at=13, tool_name="Agent")["anim"] == "sonnet ultra"
+
+
+def test_haiku_keeps_the_plain_creatures(fire):
+    fire("SessionStart", at=0, source="startup", model="claude-haiku-4-5-20251001")
+    assert fire("UserPromptSubmit", at=5)["anim"] == "model haiku"
+    assert fire("UserPromptSubmit", at=10)["anim"] == "model haiku"
+    for i, aid in enumerate(("a1", "a2", "a3")):
+        fire("SubagentStart", at=11 + i, agent_id=aid)
+    assert fire("PreToolUse", at=20, agent_id="a1", tool_name="Read")["anim"] == "ultracode work"
+
+
+def test_no_tier_keeps_echo_think_spin_and_ultracode_work(fire):
+    assert fire("UserPromptSubmit", at=0)["anim"] == "echo think spin"
+    assert fire("UserPromptSubmit", at=5)["anim"] == "echo think spin"
+    fire("PreToolUse", at=6, tool_name="Workflow")
+    assert fire("PreToolUse", at=10, tool_name="Edit")["anim"] == "ultracode work"
+
+
+@pytest.mark.parametrize("to_model, anim", [
+    ("claude-fable-5", "fable eyes"), ("claude-opus-5", "model opus"),
+    ("claude-sonnet-4-6", "model sonnet"), ("claude-haiku-4-5-20251001", "model haiku"),
+])
+def test_a_model_switch_shows_the_new_tier(fire, to_model, anim):
+    assert fire("PreToolUse", at=0, tool_name="Edit")["anim"] == "echo write"
+    # a moment: it goes through inside the dwell of the creature before it
+    assert fire("PostModelSwitch", at=1, from_model="claude-x", to_model=to_model)["anim"] == anim
+
+
+def test_after_a_switch_to_fable_the_prompts_think_in_fable_gaze(fire):
+    fire("SessionStart", at=0, source="startup", model="claude-opus-5")
+    assert fire("UserPromptSubmit", at=5)["anim"] == "model opus"
+    assert fire("PostModelSwitch", at=10, to_model="claude-fable-5")["anim"] == "fable eyes"
+    assert fire("UserPromptSubmit", at=15)["anim"] == "fable gaze"
+
+
+def test_a_switch_to_an_unknown_model_changes_nothing(fire, relay_files):
+    before = fire("PreToolUse", at=0, tool_name="Edit")
+    assert fire("PostModelSwitch", at=5, to_model="gpt-4o") == before
+
+
+def test_a_late_model_switch_shows_nothing(fire):
+    fire("UserPromptSubmit", at=10)
+    assert fire("PostModelSwitch", at=5, to_model="claude-fable-5")["anim"] == "echo think spin"
+    assert fire("UserPromptSubmit", at=20)["anim"] == "fable gaze"   # its tier still counts
+
+
 def test_transcript_tail_finds_the_newest_reply_and_its_tokens(tmp_path):
     path = tmp_path / "t.jsonl"
     _transcript(path, ("claude-haiku-4-5-20251001", 1_000), ("claude-opus-5", 123_456),
@@ -744,6 +833,8 @@ def test_every_name_the_hooks_can_send_is_in_the_firmware_table():
               hooks.LOADING, hooks.TWO_AGENTS, hooks.AGENTS_JOIN, hooks.ULTRA_ENTER,
               hooks.ULTRA_WORK, hooks.JOB_DONE, hooks.BURNER, hooks.CTF}
     picked |= {anim for _, anim in hooks.MODEL_TIERS}
+    picked |= {hooks.tier_anim(tier, role, "")
+               for _, tier in hooks.MODEL_TIERS for role in ("think", "ultra", "switch")} - {""}
     picked |= {hooks.tool_anim(t, {"command": c})
                for t in ("Edit", "Read", "Bash", "PowerShell", "WebFetch", "Skill", "Other")
                for c in ("ls", "ssh host")}

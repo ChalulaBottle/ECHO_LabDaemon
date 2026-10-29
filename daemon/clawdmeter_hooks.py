@@ -28,15 +28,20 @@ SessionStart          token burner, else ctf hoodie, else the model tier, else "
                       turn) leaves agents and creature alone and only takes down
                       the loading bar of a compaction typed by hand
 UserPromptSubmit      token burner, else ctf hoodie, else the model tier, else
-                      "echo think spin"
+                      "echo think spin". On fable the session's first prompt
+                      shows "model fable" and every later one "fable gaze"; the
+                      other tiers show their tier creature at every prompt
 PreToolUse            Edit Write MultiEdit NotebookEdit: "echo write"
                       Read Glob Grep: "echo read"
                       Bash PowerShell: "echo work"; "echo ssh" when the command
                       runs ssh, scp or sftp
                       WebFetch WebSearch: "echo consult"; Skill: "echo loading"
-                      Agent Task: "two agents" ("ultracode work" from 3 agents up)
-                      Workflow: "ultracode enter", then "ultracode work" on every
+                      Agent Task: "two agents" (ultracode work from 3 agents up)
+                      Workflow: "ultracode enter", then ultracode work on every
                       later tool call while its agents run (mode word "ultracode")
+                      ultracode work is "fable ultra", "opus ultra" or "sonnet
+                      ultra" on those tiers, "ultracode work" on haiku or an
+                      unknown tier
                       anything else: "echo work"
                       inside a subagent (agent_id set): the agents creature
                       the first call after the token reading crosses 500k:
@@ -51,7 +56,9 @@ Notification          idle_prompt: back to the device's choice (also covers Esc,
                       which fires no Stop). Permission prompts: nothing (they
                       belong to the approve hook)
 PreCompact            "echo loading"
-PostModelSwitch       remembers the model tier for the next prompt
+PostModelSwitch       remembers the model tier for the next prompt and shows the
+                      switch: "fable eyes" to fable, the tier creature ("model
+                      opus" and so on) to the others; nothing for an unknown model
 SessionEnd            this session's agents gone, hook mode words dropped, ""
 
 Subagents are counted from SubagentStart and SubagentStop only, keyed by
@@ -69,7 +76,8 @@ clear "job done".
 
 The model tier ("model haiku", "model sonnet", "model opus", "model fable") comes
 from PostModelSwitch to_model, else the SessionStart model field, else the newest
-assistant message in the transcript tail, and is cached in hooks.json. Token
+assistant message in the transcript tail, and is cached in hooks.json; its own
+creatures for thinking, ultracode work and the switch are in TIER_ANIMS. Token
 burner: the newest request's input, cache creation, cache read and output tokens
 added up (read from the transcript tail, since no hook payload carries usage)
 above 500000, held for 60 s after the last reading above; SessionStart's
@@ -83,7 +91,8 @@ Files, all under %LOCALAPPDATA%\\Clawdmeter:
                  "ctf", set by hand) stay.
     hooks.json   the hooks' own bookkeeping, never read by the daemon: running
                  subagents per session, recently finished ones, the model tier,
-                 the token reading, when the creature last changed. Kept out of
+                 whether the session has had its first prompt, the token
+                 reading, when the creature last changed. Kept out of
                  state.json because every state.json change costs the daemon one
                  usage poll.
     hooks.lock   serialises concurrent runs (parallel tool calls, agents that
@@ -94,8 +103,8 @@ Files, all under %LOCALAPPDATA%\\Clawdmeter:
 Because each state.json change costs the daemon a poll, a tool call in the first
 DWELL_S of the current creature leaves it on screen (it is skipped, not queued:
 with no process between events, the next call after DWELL_S brings its own);
-moments (prompt, stop, agents, workflow, compaction, session start and end)
-always go through at once.
+moments (prompt, stop, agents, workflow, compaction, model switch, session
+start and end) always go through at once.
 """
 
 import os
@@ -136,8 +145,20 @@ BURNER = "token burner"
 CTF = "ctf hoodie"
 MODEL_TIERS = (("haiku", "model haiku"), ("sonnet", "model sonnet"),
                ("opus", "model opus"), ("fable", "model fable"))
+# The tier's own creature for a moment, by tier creature and role: "think" at
+# a prompt after the session's first (the first keeps the tier creature, the
+# signature), "ultra" for ultracode work, "switch" for a PostModelSwitch to it.
+# A missing role falls back to the tier creature (think, switch) or to
+# ULTRA_WORK (ultra). Haiku has none of its own.
+TIER_ANIMS = {
+    "model fable": {"think": "fable gaze", "ultra": "fable ultra", "switch": "fable eyes"},
+    "model opus": {"ultra": "opus ultra"},
+    "model sonnet": {"ultra": "sonnet ultra"},
+}
+TIER_NAMES = frozenset(a for _, a in MODEL_TIERS)
 ANIMS = frozenset({THINK, WRITE, READ, WORK, SSH, CONSULT, LOADING, TWO_AGENTS, AGENTS_JOIN,
-                   ULTRA_ENTER, ULTRA_WORK, JOB_DONE, BURNER, CTF} | {a for _, a in MODEL_TIERS})
+                   ULTRA_ENTER, ULTRA_WORK, JOB_DONE, BURNER, CTF} | TIER_NAMES
+                  | {a for roles in TIER_ANIMS.values() for a in roles.values()})
 HOOK_WORDS = ("ultracode", "done")   # mode words this script owns
 
 WRITE_TOOLS = frozenset({"Edit", "Write", "MultiEdit", "NotebookEdit"})
@@ -325,6 +346,11 @@ def tier_of(model) -> str | None:
     return None
 
 
+def tier_anim(tier, role: str, default: str) -> str:
+    """The tier's creature for one role of TIER_ANIMS, else `default`."""
+    return (TIER_ANIMS.get(tier) or {}).get(role, default)
+
+
 def tool_anim(tool: str, tool_input) -> str:
     """The working creature for one tool call in the main conversation."""
     if tool in WRITE_TOOLS:
@@ -497,8 +523,10 @@ def _clean_sidecar(data) -> dict:
                 clean = {a: _num(ts) for a, ts in stamps.items() if isinstance(a, str) and _num(ts) is not None}
                 if clean:
                     rec[key] = clean
-        if s.get("model") in ANIMS and isinstance(s.get("model_src"), str):
+        if s.get("model") in TIER_NAMES and isinstance(s.get("model_src"), str):
             rec["model"], rec["model_src"] = s["model"], s["model_src"]
+        if s.get("prompted") is True:
+            rec["prompted"] = True
         burn = s.get("burn")
         if isinstance(burn, dict) and isinstance(burn.get("on"), bool) and _num(burn.get("hi")) is not None:
             rec["burn"] = {"on": burn["on"], "hi": _num(burn["hi"])}
@@ -742,18 +770,27 @@ class _Run:
 
     # -- choosing ---------------------------------------------------------------
 
-    def turn_start(self, default: str, tokens, tail_model) -> str:
+    def turn_start(self, default: str, tokens, tail_model, prompt: bool = False) -> str:
         on, _ = self.burner(tokens)
         if on:
             return BURNER
         if self.ctf():
             return CTF
-        return self.model(tail_model) or default
+        tier = self.model(tail_model)
+        if not tier:
+            return default
+        # SessionStart and the first prompt show the tier creature; later prompts its thinking one
+        return tier_anim(tier, "think", tier) if prompt and self.sess.get("prompted") else tier
+
+    def ultra_work(self) -> str:
+        """Ultracode work in the session's tier, from the cached tier only (no
+        transcript read: agent events come in bursts)."""
+        return tier_anim(self.sess.get("model"), "ultra", ULTRA_WORK)
 
     def agents_anim(self, extra: int = 0) -> str:
         if self.ultra_live():
-            return ULTRA_WORK
-        return ULTRA_WORK if self.agents() + extra >= 3 else TWO_AGENTS
+            return self.ultra_work()
+        return self.ultra_work() if self.agents() + extra >= 3 else TWO_AGENTS
 
     def propose(self, anim: str, force: bool = False) -> None:
         self.proposal, self.force = anim, force
@@ -818,7 +855,8 @@ def _on_session_start(r: _Run) -> None:
 
 def _on_prompt(r: _Run) -> None:
     tail_model, tokens = r.tail()
-    r.propose(r.turn_start(THINK, tokens, tail_model), force=True)
+    r.propose(r.turn_start(THINK, tokens, tail_model, prompt=True), force=True)
+    r.sess["prompted"] = True   # here only: SessionStart must not use up the first prompt
 
 
 def _on_pre_tool(r: _Run) -> None:
@@ -837,7 +875,7 @@ def _on_pre_tool(r: _Run) -> None:
         r.propose(r.agents_anim(extra=1), force=True)
         return
     if r.ultra_live():
-        r.propose(ULTRA_WORK)
+        r.propose(r.ultra_work())
         return
     tail_model, tokens = r.tail()
     r.model(tail_model)
@@ -898,7 +936,11 @@ def _on_pre_compact(r: _Run) -> None:
 
 
 def _on_model_switch(r: _Run) -> None:
-    r.set_model(tier_of(r.p.get("to_model")), "switch")
+    tier = tier_of(r.p.get("to_model"))
+    if tier is None:
+        return  # not a tier we know: the creature stays
+    r.set_model(tier, "switch")
+    r.propose(tier_anim(tier, "switch", tier), force=True)
 
 
 def _on_session_end(r: _Run) -> None:

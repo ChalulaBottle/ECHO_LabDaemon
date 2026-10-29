@@ -7,6 +7,7 @@ various agents", "button #1 to bring up the stats", "the number of agents that a
 
 ## RESUME STATE
 
+- 2026-10-28, tier aware hooks (branch `feat/tier-aware-hooks` from `release/increment-4`, not merged): fable prompts after the first show `fable gaze`, ultracode work is `fable ultra`, `opus ultra` or `sonnet ultra` by tier, a model switch shows `fable eyes` (or the tier creature); they go live on the next hook event once merged into `release/increment-4` in the `Temp Clawdmeter` checkout, since `~/.claude/settings.json` runs `daemon\clawdmeter_hooks.py` from that working tree on every event, so no tray restart is needed.
 - **2026-10-28 (later), THREE MORE, BUILT, NOT FLASHED (branch `feat/hd-ssh-hoodie`, merged into
   `release/increment-4`; site `site/hd-ssh-hoodie` merged into `port/waveshare-lcd-4`):** operator asks the same
   morning: `ctf hoodie hd` (60 lattice, 36 frames, 129,600 B, the hoodie with lining, drawstrings, cuffs, a pixel font
@@ -267,9 +268,9 @@ board decides only what it can see in its own payload (usage %, status). Table t
 | thinking (assistant turn, no tool) | hook: PreToolUse absent for >5 s after UserPromptSubmit | `echo think` |
 | working (tool calls flowing) | hook: PreToolUse / PostToolUse | `echo work` |
 | writing files | hook: PostToolUse on Edit/Write | `echo write` |
-| subagents running (n) | hook: SubagentStart / SubagentStop counter | 1: `echo idle`, 2: `two agents`, 3+: `ultracode work`; `n` badge |
-| workflow / ultracode start | hook on Workflow tool use | `ultracode enter` then `ultramode` while running |
-| model tier in use | Claude Code status line / model env | `haiku` / `sonnet` / `opus` / `fable` |
+| subagents running (n) | hook: SubagentStart / SubagentStop counter | 1: `echo idle`, 2: `two agents`, 3+: `ultracode work`; `n` badge. Since 2026-10-28 the 3+ creature follows the tier: `fable ultra` on fable, `opus ultra` on opus, `sonnet ultra` on sonnet, `ultracode work` on haiku or an unknown tier; the `n` badge is unchanged |
+| workflow / ultracode start | hook on Workflow tool use | `ultracode enter` then `ultramode` while running. Since 2026-10-28 the working creature after `ultracode enter` is the tier's: `fable ultra`, `opus ultra`, `sonnet ultra`, else `ultracode work` |
+| model tier in use | Claude Code status line / model env | `haiku` / `sonnet` / `opus` / `fable`. Since 2026-10-28 (hooks `TIER_ANIMS`): session start and the first prompt show the tier creature (`model fable` and so on); later prompts on fable show `fable gaze`, the other tiers keep their tier creature; a PostModelSwitch shows `fable eyes` when switching to fable and the tier creature for the others |
 | tokens this turn > 500k | hook: budget / usage reading | `token burner` |
 | session limit hit | board: payload `st` != allowed or session ≥ 100 % | `credits out` (board-local, no host needed) |
 | CTF work | hook: cwd under a CTF folder (htb-*, ctf, holmes-launch) or a `mode: ctf` set by hand | `ctf hoodie` |
