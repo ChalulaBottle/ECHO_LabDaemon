@@ -7,6 +7,19 @@ various agents", "button #1 to bring up the stats", "the number of agents that a
 
 ## RESUME STATE
 
+- **2026-10-28 (later), THREE MORE, BUILT, NOT FLASHED (branch `feat/hd-ssh-hoodie`, merged into
+  `release/increment-4`; site `site/hd-ssh-hoodie` merged into `port/waveshare-lcd-4`):** operator asks the same
+  morning: `ctf hoodie hd` (60 lattice, 36 frames, 129,600 B, the hoodie with lining, drawstrings, cuffs, a pixel font
+  404, the portal sink), `echo ssh hd` (60 lattice, 34 frames, 122,400 B, "something that demonstrates ssh into a
+  machine": a prompt typed, a gold key down the cable, the padlock opens, packets both ways, the remote screen fills,
+  the session closes), and `echo packet dodge` (40 lattice, 32 frames, 51,200 B, "the daemon dodging packets as well
+  ultracode": lean, hop, duck, then the glitch split into three minis so the red wall passes between them; category
+  Mode, host named for ultracode, NOT in the wildcard pool; the two HD cells are in it). Table 127 rows with
+  SPLASH_BIG. Files `docs/bench/anims_hd_ctf_hoodie.js`, `anims_hd_ssh.js`, `anims_lab_packet_dodge.js`. Build
+  figures: lcd_4 99.5 percent (8,215,755 of 8,257,536 bytes, 41,781 left); amoled_216 not rebuilt, its table is
+  unchanged at 73 rows and every new row sits inside SPLASH_BIG. The lcd_4 partition is now full for practical purposes: the next big cell needs a cell
+  retired or the frame budget reworked. Exact next action unchanged: flash lcd_4, `anim echo ssh hd`, captures,
+  FLASHED_REV.
 - **2026-10-28, CULTURE BATCH THREE BUILT, NOT FLASHED (branch `feat/culture-batch-3` from `release/increment-4`,
   merged into it; site on `site/culture-batch-3` merged into `port/waveshare-lcd-4`):** twenty five creatures on
   the 40 cell lattice (§ The culture batch three below), 1,092,800 bytes of frames, table 124 rows with SPLASH_BIG
