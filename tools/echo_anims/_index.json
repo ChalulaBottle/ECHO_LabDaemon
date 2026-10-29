@@ -605,6 +605,22 @@
     "tier": "big"
   },
   {
+    "filename": "ctf_hoodie_hd.html",
+    "name": "ctf hoodie hd",
+    "category": "Idle",
+    "frame_count": 36,
+    "palette_size": 10,
+    "tier": "big"
+  },
+  {
+    "filename": "echo_ssh_hd.html",
+    "name": "echo ssh hd",
+    "category": "Active",
+    "frame_count": 34,
+    "palette_size": 10,
+    "tier": "big"
+  },
+  {
     "filename": "echo_door.html",
     "name": "echo door",
     "category": "Mode",
@@ -656,6 +672,14 @@
     "name": "echo hash cracked",
     "category": "Thinking",
     "frame_count": 28,
+    "palette_size": 10,
+    "tier": "big"
+  },
+  {
+    "filename": "echo_packet_dodge.html",
+    "name": "echo packet dodge",
+    "category": "Mode",
+    "frame_count": 32,
     "palette_size": 10,
     "tier": "big"
   },

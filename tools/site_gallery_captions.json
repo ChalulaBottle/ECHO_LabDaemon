@@ -538,5 +538,17 @@
  "echo_focused": [
   "ECHO narrows its eyes, a reticle draws itself round its visor and locks on, one slow blink, then it fades.",
   "Teal pixel creature with narrowed eyes as thin corner brackets close in around its visor."
+ ],
+ "ctf_hoodie_hd": [
+  "Hood up, drawstrings tugged, matrix rain behind: a 404 flashes on the chest, alerts pop, and it sinks through a magenta portal.",
+  "ECHO creature in a black hoodie under green rain with a pink 404 on its chest, sinking into a pink portal."
+ ],
+ "echo_ssh_hd": [
+  "ECHO types a command, sends a gold key down the cable, the padlock opens, packets stream to the remote machine, then it logs out.",
+  "The teal creature at a keyboard unlocks a grey server tower with a key; a teal cable carries packets."
+ ],
+ "echo_packet_dodge": [
+  "The daemon leans, hops and ducks single packets, then a wall it cannot dodge: it glitches, splits into three agents in the gaps, regroups.",
+  "ECHO creature dodges gold packets, then splits into three mini agents so a red packet wall passes between them."
  ]
 }
