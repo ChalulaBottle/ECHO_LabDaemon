@@ -496,7 +496,8 @@ def test_an_ok_becomes_last_and_shows_the_board_takes_cmds(relay_files, logs):
     _hear(s, {"c": "bright", "ok": 1})
     report = _report(relay_files)
     assert abs(report.pop("ts") - time.time()) < 5
-    assert report == {"cmd": True, "last": {"c": "bright", "ok": 1}, "addr": BOARD, "name": mod.DEVICE_NAME}
+    assert report == {"cmd": True, "last": {"c": "bright", "ok": 1}, "table": "unknown", "addr": BOARD,
+                      "name": mod.DEVICE_NAME}                                  # no status report yet: table unknown
     assert _reports(relay_files) == ["E8-3D-C1-F7-6F-21.json"]                 # dashes for the colons
     assert logs == [f"Cmd bright done ({BOARD})"]
 

@@ -101,7 +101,8 @@ def test_state_change_pushes_without_waiting_for_the_poll(state_file, monkeypatc
     async def fake_write(_uuid, data, response=False):
         sent.append(json.loads(data))
         if len(sent) == 1:
-            _write(state_file, {"agents": 5, "anim": "work coding", "mode": ""})
+            # a name the board's table holds (anything else is resolved per board, test_windows_switching)
+            _write(state_file, {"agents": 5, "anim": "echo work", "mode": ""})
             st = state_file.stat()  # force a distinct mtime even inside one clock tick
             os.utime(state_file, ns=(st.st_atime_ns, st.st_mtime_ns + 10**9))
         else:
@@ -122,7 +123,7 @@ def test_state_change_pushes_without_waiting_for_the_poll(state_file, monkeypatc
 
     assert sent == [
         {"s": 10, "ok": True, "n": 2},
-        {"s": 10, "ok": True, "n": 5, "a": "work coding"},
+        {"s": 10, "ok": True, "n": 5, "a": "echo work"},
     ]
     # the second send reused the fresh usage payload: one API call, not one per state change
     assert poll.call_count == 1

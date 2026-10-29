@@ -31,6 +31,16 @@ def _run(coro):
     return asyncio.run(coro)
 
 
+def _plain_board_parts(fake):
+    """A fake Session (an AsyncMock) gets the plain, non async parts the link's tick calls:
+    the creature table and the per board name resolution, here a pass through."""
+    fake.table_dirty = False
+    fake.sent_anim = None
+    fake.board_fields = MagicMock(side_effect=lambda fields: dict(fields))
+    fake.resolved_anim = MagicMock(return_value=None)
+    fake.status_overdue = MagicMock()
+
+
 def _make_device(address="AA:BB:CC:DD:EE:FF"):
     """Build a minimal fake BLEDevice."""
     device = MagicMock()
@@ -189,6 +199,7 @@ def test_zombie_link_break_after_limit_consecutive_failures(monkeypatch):
     fake_session.refresh_requested.is_set = MagicMock(return_value=False)
     fake_session.refresh_requested.clear = MagicMock()
     fake_session.refresh_requested.wait = AsyncMock()
+    _plain_board_parts(fake_session)
 
     # Force elapsed >= POLL_INTERVAL immediately
     monkeypatch.setattr(mod, "POLL_INTERVAL", 0)
@@ -249,6 +260,7 @@ def test_zombie_counter_resets_on_success_with_raised_limit(monkeypatch):
     fake_session.refresh_requested.is_set = MagicMock(return_value=False)
     fake_session.refresh_requested.clear = MagicMock()
     fake_session.refresh_requested.wait = AsyncMock()
+    _plain_board_parts(fake_session)
 
     monkeypatch.setattr(mod, "POLL_INTERVAL", 0)
     monkeypatch.setattr(mod, "ZOMBIE_BREAK_LIMIT", 2)  # raise limit to test reset logic
@@ -294,6 +306,7 @@ def test_zombie_break_disconnect_called_in_finally(monkeypatch):
     fake_session.refresh_requested.is_set = MagicMock(return_value=False)
     fake_session.refresh_requested.clear = MagicMock()
     fake_session.refresh_requested.wait = AsyncMock()
+    _plain_board_parts(fake_session)
 
     monkeypatch.setattr(mod, "POLL_INTERVAL", 0)
 
@@ -330,6 +343,7 @@ def test_zombie_break_returns_used_successfully_false(monkeypatch):
     fake_session.refresh_requested.is_set = MagicMock(return_value=False)
     fake_session.refresh_requested.clear = MagicMock()
     fake_session.refresh_requested.wait = AsyncMock()
+    _plain_board_parts(fake_session)
 
     monkeypatch.setattr(mod, "POLL_INTERVAL", 0)
 

@@ -38,6 +38,7 @@ def relay_files(tmp_path, monkeypatch):
     monkeypatch.setattr(mod, "DECISION_DIR", base / "decisions")
     monkeypatch.setattr(mod, "HEARTBEAT_FILE", base / "daemon.heartbeat")
     monkeypatch.setattr(mod, "STATE_FILE", base / "state.json")
+    monkeypatch.setattr(mod, "CONFIG_FILE", base / "config")   # absent: every option at its default
     monkeypatch.setattr(mod, "NOTIFY_FILE", base / "notify.json")
     monkeypatch.setattr(mod, "PAGE_FILE", base / "page.json")
     monkeypatch.setattr(mod, "EVENT_DIR", base / "events")
