@@ -7,6 +7,7 @@ test the hooks, and it must run on the smaller board too (both plugged in, both 
 
 ## RESUME STATE
 
+- 2026-10-28 22:10, FLASHED: the 4 inch board (E8:3D:C1:F7:6F:21, COM11) runs the 131 row table from 1b15905 with the music card touch buttons (lcd_4 99.9 percent); nim echo kaiju played on serial right after the flash. The AMOLED stays on its older firmware (base table, no cmd message). FLASHED_REV in tools/site_gallery.js moved to 1b15905.
 - 2026-10-28, animation switching increment 1 BUILT, NOT MERGED, tray NOT restarted, on branch
   `feat/switching-increment-1` (from 8c2368d, the Fable working set; not pushed). The review is
   `plans/animation-switching-review.md` (P1, P2, P3's detection and resolver, plus the safe accident fixes).
