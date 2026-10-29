@@ -202,8 +202,11 @@ static const splash_anim_def_t splash_anims[SPLASH_ANIM_COUNT] = {
 # P3: the resolver (anim_fallback)
 # ---------------------------------------------------------------------------
 
-@pytest.mark.parametrize("n, table", [(127, "big"), (73, "base"), (83, "unknown"), (None, "unknown"),
-                                      (True, "unknown"), ("127", "unknown")])
+BIG_N = fb.TABLES["counts"]["big"]      # the current build's big count (131 with the Fable working set)
+
+
+@pytest.mark.parametrize("n, table", [(BIG_N, "big"), (73, "base"), (83, "unknown"), (None, "unknown"),
+                                      (True, "unknown"), (str(BIG_N), "unknown")])
 def test_which_table_a_count_means(n, table):
     assert fb.table_of(n) == table
 
@@ -212,10 +215,10 @@ def test_which_table_a_count_means(n, table):
     ("echo ssh hd", "echo ssh", "echo ssh hd"),
     ("ctf hoodie hd", "ctf hoodie", "ctf hoodie hd"),
     ("echo packet dodge", "ultracode work", "echo packet dodge"),
-    ("fable work", "echo work", "echo work"),        # in no build yet: both boards get the echo set
-    ("fable write", "echo write", "echo write"),
-    ("fable read", "echo read", "echo read"),
-    ("fable done", "job done", "job done"),
+    ("fable work", "echo work", "fable work"),       # big tier since 1b15905: the base board gets the echo set
+    ("fable write", "echo write", "fable write"),
+    ("fable read", "echo read", "fable read"),
+    ("fable done", "job done", "fable done"),
     ("fable gaze", "fable gaze", "fable gaze"),      # base: stays
     ("fable eyes", "fable eyes", "fable eyes"),
     ("fable ultra", "fable ultra", "fable ultra"),   # base today; its chain is ultracode work
@@ -273,7 +276,7 @@ def _report(base):
     return json.loads((base / "board" / f"{BOARD.replace(':', '-')}.json").read_text(encoding="utf-8"))
 
 
-@pytest.mark.parametrize("n, table", [(127, "big"), (73, "base"), (83, "unknown")])
+@pytest.mark.parametrize("n, table", [(BIG_N, "big"), (73, "base"), (83, "unknown")])
 def test_the_status_answer_records_the_table_with_fw_and_n(relay_files, logs, n, table):
     s = mod.Session(MagicMock(), BOARD)
     _hear(s, {"c": "status", "fw": "Waveshare LCD 4", "n": n})
