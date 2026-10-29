@@ -121,6 +121,12 @@
 > |---|---|---|
 > | ![](docs/media/anims/ctf_hoodie_hd.gif) | ![](docs/media/anims/echo_ssh_hd.gif) | ![](docs/media/anims/echo_packet_dodge.gif) |
 >
+> The Fable working set (2026-10-28, 20 cell, big tier): on a Fable session the hooks swap the working creatures for Fable's own, amber ear and antenna tip, four sideways eyes:
+>
+> | fable work | fable write | fable read | fable done |
+> |---|---|---|---|
+> | ![](docs/media/anims/fable_work.gif) | ![](docs/media/anims/fable_write.gif) | ![](docs/media/anims/fable_read.gif) | ![](docs/media/anims/fable_done.gif) |
+>
 > **Model tiers**, one family, four signatures (Haiku, Sonnet, Opus, Fable):
 >
 > ![Model tier creatures](docs/media/sheets/model-tiers.png)

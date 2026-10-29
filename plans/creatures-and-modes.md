@@ -7,6 +7,7 @@ various agents", "button #1 to bring up the stats", "the number of agents that a
 
 ## RESUME STATE
 
+- 2026-10-28, Fable working set in the hooks (branch `feat/fable-working-set`, hooks commit, not merged): on fable, PreToolUse gives `fable write`, `fable read`, `fable work` and Stop gives `fable done` (`TIER_ROLES` in `clawdmeter_hooks.py`); these four cells are tier big, so a board built without SPLASH_BIG ignores the name and falls back to its own choice while Fable is working; live on the next hook event once merged into `release/increment-4`.
 - 2026-10-28, tier aware hooks (branch `feat/tier-aware-hooks` from `release/increment-4`, not merged): fable prompts after the first show `fable gaze`, ultracode work is `fable ultra`, `opus ultra` or `sonnet ultra` by tier, a model switch shows `fable eyes` (or the tier creature); they go live on the next hook event once merged into `release/increment-4` in the `Temp Clawdmeter` checkout, since `~/.claude/settings.json` runs `daemon\clawdmeter_hooks.py` from that working tree on every event, so no tray restart is needed.
 - **2026-10-28 (later), THREE MORE, BUILT, NOT FLASHED (branch `feat/hd-ssh-hoodie`, merged into
   `release/increment-4`; site `site/hd-ssh-hoodie` merged into `port/waveshare-lcd-4`):** operator asks the same
@@ -266,8 +267,8 @@ board decides only what it can see in its own payload (usage %, status). Table t
 |---|---|---|
 | idle, morning (local time before 10:00) | daemon (clock) | `coffee morning`, else `coffee` / `echo idle` rotation |
 | thinking (assistant turn, no tool) | hook: PreToolUse absent for >5 s after UserPromptSubmit | `echo think` |
-| working (tool calls flowing) | hook: PreToolUse / PostToolUse | `echo work` |
-| writing files | hook: PostToolUse on Edit/Write | `echo write` |
+| working (tool calls flowing) | hook: PreToolUse / PostToolUse | `echo work`. Since 2026-10-28 on fable: `fable work` for Bash, PowerShell and any other tool, `fable read` for Read, Glob and Grep, `fable done` for the Stop moment (`job done` elsewhere); `echo ssh`, `echo consult`, `echo loading`, the agents names and the burner are the same on every tier; the other tiers keep the echo set until their cells exist (one `TIER_ANIMS` entry each) |
+| writing files | hook: PostToolUse on Edit/Write | `echo write`. Since 2026-10-28 `fable write` on fable |
 | subagents running (n) | hook: SubagentStart / SubagentStop counter | 1: `echo idle`, 2: `two agents`, 3+: `ultracode work`; `n` badge. Since 2026-10-28 the 3+ creature follows the tier: `fable ultra` on fable, `opus ultra` on opus, `sonnet ultra` on sonnet, `ultracode work` on haiku or an unknown tier; the `n` badge is unchanged |
 | workflow / ultracode start | hook on Workflow tool use | `ultracode enter` then `ultramode` while running. Since 2026-10-28 the working creature after `ultracode enter` is the tier's: `fable ultra`, `opus ultra`, `sonnet ultra`, else `ultracode work` |
 | model tier in use | Claude Code status line / model env | `haiku` / `sonnet` / `opus` / `fable`. Since 2026-10-28 (hooks `TIER_ANIMS`): session start and the first prompt show the tier creature (`model fable` and so on); later prompts on fable show `fable gaze`, the other tiers keep their tier creature; a PostModelSwitch shows `fable eyes` when switching to fable and the tier creature for the others |
