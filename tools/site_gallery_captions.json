@@ -550,5 +550,21 @@
  "echo_packet_dodge": [
   "The daemon leans, hops and ducks single packets, then a wall it cannot dodge: it glitches, splits into three agents in the gaps, regroups.",
   "ECHO creature dodges gold packets, then splits into three mini agents so a red packet wall passes between them."
+ ],
+ "fable_work": [
+  "Fable at a slate desk: the hands tap in bursts of three and two and every press flicks the visor to ping.",
+  "The Fable creature, amber ear and antenna tip, four sideways eyes, typing at a slate desk."
+ ],
+ "fable_write": [
+  "Fable steps left and types three lines on a small page; the four eyes close ranks to watch, the page clears with a ping.",
+  "The Fable creature typing lines onto a small page that clears with an antenna ping."
+ ],
+ "fable_read": [
+  "Fable's four eyes close into one line and step across the visor like a reader, jumping back at each line end.",
+  "The Fable creature reading, its four sideways eyes stepping left to right across the visor."
+ ],
+ "fable_done": [
+  "Two bounces, a thumbs up, the visor flashes white under four dark eyes, confetti in ping and amber.",
+  "The Fable creature celebrating with a thumbs up and confetti."
  ]
 }
