@@ -7,6 +7,24 @@ test the hooks, and it must run on the smaller board too (both plugged in, both 
 
 ## RESUME STATE
 
+- 2026-10-28, music card touch transport BUILT, NOT FLASHED, on branch `feat/music-touch-buttons` (from
+  `release/increment-4`, not merged, not pushed). Three touch buttons on the `spotify` page (ui.cpp `page_ctl`):
+  previous `|<`, play or pause (`>` paused, `||` while `pa` is `dance`), next `>|`, 96 by 56 px, 12 px apart,
+  panel fill, 1 px neutral edge, teal label (new `THEME_TEAL` 0x35e0c0 in theme.h), brighter while pressed. A
+  tap sends `pwr2`, `aux` or `aux2` with scr `page` through `ble_send_button`, so the tray and the engine are
+  unchanged; with no host listening the label dims for 600 ms. The serial log reads `page: tap <name>`, then
+  the BLE line. Placement on the 480 px boards, screen y: card at the foot of the creature's band 287 to 343
+  (with art 368 to 424; the band gives up the row so the 160 px creature centres above it), large 324 to 380
+  just above the two lines (over the dancer's bottom), full 318 to 374 just above the strip; the dancers keep
+  their 360 and 480 px. Every other tap on the card still leaves the page, the long press still steps the
+  view, the wake press sends nothing. Build figures: lcd_4 Flash 8,216,971 of 8,257,536 (99.5 percent, 1,216
+  bytes more, 40,565 left); amoled_216 Flash 3,317,323 of 3,342,336 (99.3 percent, 25,013 left), no guard
+  needed. The current lcd_4 unit's GT911 does not answer (plans/waveshare-lcd-4-port.md), so on it the buttons
+  are drawn but cannot be tapped until the replacement unit; the AMOLED 2.16 (CST9220, working touch) runs the
+  same ui.cpp and is where they can be tried now. Bring up: flash lcd_4 (or amoled_216) from this branch, play
+  a track, tap each button, expect `events/` files in `%LOCALAPPDATA%\Clawdmeter` and the engine log
+  `spotify: play_pause`, `spotify: next`, `spotify: previous`; the serial `btn aux` poke proves only the host
+  path, not the touch. Unchecked on the device: the full view's row against every dancer's visor.
 - **2026-10-28, CULTURE BATCH THREE BUILT, NOT FLASHED:** twenty five more creatures on the 40 cell lattice
   (`plans/creatures-and-modes.md` § The culture batch three, the table, the review notes and the build figures),
   merged into `release/increment-4` with the firmware table at 124 rows with SPLASH_BIG and 73 without; the site
@@ -243,7 +261,8 @@ button events from any, heartbeat `connected` = any link up. `CLAWDMETER_BLE_ADD
   DPAPI-encrypted (`ctypes` CryptProtectData) in `%LOCALAPPDATA%\Clawdmeter\spotify.tok`; state = track,
   artist, playing, device, progress, duration; actions play_pause, next, previous, volume_up,
   volume_down; page while playing (creature `echo headphones`, progress bar); buttons on the page:
-  aux = play_pause, pwr = next; page clears 30 s after playback stops or on `page/off`.
+  aux = play_pause, aux2 = next, pwr2 = previous (corrected 2026-10-28; a plain pwr tap on the page
+  only goes back to the creature); page clears 30 s after playback stops or on `page/off`.
 - Faces: CLI `python -m labdaemon_engine <serve|notify|do|state|spotify login|page off>`; MCP
   `labdaemon_mcp.py` (stdio, `mcp` package: `lab_list`, `lab_state`, `lab_do`, `lab_notify`), settings
   entry operator gated. Autostart: HKCU Run value `LabDaemonEngine` (base pythonw), same helper pattern.

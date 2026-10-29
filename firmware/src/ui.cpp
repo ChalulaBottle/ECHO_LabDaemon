@@ -212,6 +212,8 @@ static void compute_layout(const BoardCaps& c) {
 #define COL_AMBER     THEME_AMBER
 #define COL_RED       THEME_RED
 #define COL_BAR_BG    THEME_BAR_BG
+#define COL_TEAL      THEME_TEAL
+#define COL_PRESSED   THEME_PRESSED
 
 // ---- Usage screen widgets (single non-splash view) ----
 static lv_obj_t* usage_container;
@@ -717,7 +719,8 @@ static void notify_tick(void) {
 // usage. It sits over the screens like an overlay, under a notification and an
 // approve prompt, and is the third stop of the screen cycle (ui_cycle_screens).
 // Left with the cycle or a tap it goes out of sight, still live (page_hidden),
-// until the next cycle or another page. Its buttons are main.cpp's.
+// until the next cycle or another page. Its buttons are main.cpp's; the music
+// card adds three touch buttons that send the same names (page_ctl).
 //
 // Fixed slots, top to bottom: the title, a band for the creature, the three
 // lines, the bar along the bottom edge. An empty slot stays empty; nothing moves.
@@ -745,6 +748,40 @@ static char      page_anim[PAGE_ANIM_MAX + 1] = "";   // what the creature was a
 static char      page_txt_title[PAGE_TITLE_MAX + 1] = "";       // the texts last set on the labels
 static char      page_txt_line[3][PAGE_LINE_MAX + 1] = { "", "", "" };
 static bool      page_hidden = false;   // left by the cycle or a tap; page_name stays, the page is live
+
+// The music card's touch transport: previous, play or pause, next. A tap on
+// one sends what the page's buttons send (pwr2, aux, aux2 with scr "page"), so
+// the engine's spotify controller needs nothing new. Shown on the "spotify"
+// page only. Each button is clickable without EVENT_BUBBLE, so a tap on it ends
+// there and never leaves the page; the row itself is not clickable, so a tap
+// between two buttons, like any tap elsewhere on the card, still does. A press
+// that wakes the panel never reaches them (my_touch_cb swallows it).
+#define PAGE_CTL_N      3
+#define PAGE_CTL_DIM_MS 600   // a label stays dim this long when no host took its press
+static const char* const PAGE_CTL_BTN[PAGE_CTL_N] = { "pwr2", "aux", "aux2" };
+static lv_obj_t* page_ctl = nullptr;              // the row, centred
+static lv_obj_t* page_ctl_lbl[PAGE_CTL_N] = { nullptr, nullptr, nullptr };
+static int16_t   page_ctl_w = 0, page_ctl_h = 0;
+static bool      page_ctl_playing = false;        // the middle label reads ||
+static uint32_t  page_ctl_dim_ms  = 0;            // when a label went dim; 0 none
+
+static bool page_ctl_on(void) {
+    return strcmp(page_name, "spotify") == 0;
+}
+
+static void page_ctl_cb(lv_event_t* e) {
+    const int i = (int)(intptr_t)lv_event_get_user_data(e);
+    Serial.printf("page: tap %s\n", PAGE_CTL_BTN[i]);
+    if (ble_send_button(PAGE_CTL_BTN[i], "page")) return;
+    lv_obj_set_style_text_color(page_ctl_lbl[i], COL_DIM, 0);   // no host took it
+    page_ctl_dim_ms = lv_tick_get() | 1;
+}
+
+static void page_ctl_tick(void) {
+    if (!page_ctl_dim_ms || lv_tick_get() - page_ctl_dim_ms < PAGE_CTL_DIM_MS) return;
+    page_ctl_dim_ms = 0;
+    for (int i = 0; i < PAGE_CTL_N; i++) lv_obj_set_style_text_color(page_ctl_lbl[i], COL_TEAL, 0);
+}
 
 // The dance view (operator, 2026-10-03: "a close up that almost overtakes the
 // screen imitating a music video view"): how big the dance floor draws its
@@ -1040,8 +1077,25 @@ static void page_layout(void) {
     set_hidden(page_lbl_line[1], !card);
     set_hidden(page_lbl_line[2], !card);
     set_hidden(page_strip, v != DVIEW_FULL);
+    // The transport row, on the spotify page only. The card: at the foot of the
+    // band, which gives up the row's height and a gap so the creature centres
+    // above it (never shorter than the creature). Large: right above the two
+    // lines, over the dancer's ground. Full: a gap above the strip, under the
+    // dancer's visor. The dancer keeps its size in both.
+    const bool ctl = page_ctl_on();
+    int band_h = g.band_h;
+    int ctl_y  = g.line0_y - page_gap - page_ctl_h - (v == DVIEW_FULL ? page_gap : 0);
+    if (card) {
+        ctl_y = g.band_y + g.band_h - page_ctl_h;
+        if (ctl) {   // the creature's card size fits both card bands (init_page_overlay, page_art_init)
+            band_h -= page_ctl_h + page_gap;
+            if (band_h < page_px[DVIEW_CARD]) band_h = page_px[DVIEW_CARD];
+        }
+    }
+    lv_obj_set_pos(page_ctl, (L.content_w - page_ctl_w) / 2, ctl_y);
+    set_hidden(page_ctl, !ctl);
     lv_obj_set_pos(page_band, g.band_x, g.band_y);
-    lv_obj_set_size(page_band, g.band_w, g.band_h > 0 ? g.band_h : 1);   // the creature is centred in it
+    lv_obj_set_size(page_band, g.band_w, band_h > 0 ? band_h : 1);   // the creature is centred in it
     lv_obj_set_pos(page_bar, 0, g.bar_y);
     lv_obj_set_height(page_bar, g.bar_h);
 #ifdef FEATURE_PICTURE
@@ -1181,6 +1235,50 @@ static void init_page_overlay(lv_obj_t* scr) {
 #ifdef FEATURE_PICTURE
     page_art_init(gap, title_h, line_h, pitch, bar_y);   // the card with art
 #endif
+
+    // The music card's transport row, made last so it draws over the band, the
+    // strip, the bar and the art in every view (the notify and approve overlays
+    // are made after the page, so they still cover it). page_layout places it.
+    // Plain objects: a fill, no shadow, so a dancer frame redrawing under one
+    // costs a rectangle.
+    page_ctl_h = L.scr_h >= 300 ? 56 : 36;
+    {
+        const int third = (L.content_w - 2 * gap) / 3;
+        const int w     = third < 96 ? third : 96;
+        page_ctl_w = 3 * w + 2 * gap;
+        page_ctl = lv_obj_create(page_group);
+        lv_obj_set_size(page_ctl, page_ctl_w, page_ctl_h);
+        lv_obj_set_style_bg_opa(page_ctl, LV_OPA_TRANSP, 0);
+        lv_obj_set_style_border_width(page_ctl, 0, 0);
+        lv_obj_set_style_pad_all(page_ctl, 0, 0);
+        lv_obj_clear_flag(page_ctl, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_clear_flag(page_ctl, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_add_flag(page_ctl, LV_OBJ_FLAG_HIDDEN);
+        static const char* const TXT[PAGE_CTL_N] = { "|<", ">", ">|" };
+        for (int i = 0; i < PAGE_CTL_N; i++) {
+            lv_obj_t* b = lv_obj_create(page_ctl);
+            lv_obj_set_pos(b, i * (w + gap), 0);
+            lv_obj_set_size(b, w, page_ctl_h);
+            lv_obj_set_style_bg_color(b, COL_PANEL, 0);
+            lv_obj_set_style_bg_color(b, COL_PRESSED, LV_STATE_PRESSED);
+            lv_obj_set_style_bg_opa(b, LV_OPA_COVER, 0);
+            lv_obj_set_style_radius(b, 8, 0);
+            lv_obj_set_style_border_width(b, 1, 0);
+            lv_obj_set_style_border_color(b, COL_BAR_BG, 0);
+            lv_obj_set_style_border_color(b, COL_DIM, LV_STATE_PRESSED);
+            lv_obj_set_style_shadow_width(b, 0, 0);
+            lv_obj_set_style_pad_all(b, 0, 0);
+            lv_obj_clear_flag(b, LV_OBJ_FLAG_SCROLLABLE);
+            lv_obj_add_flag(b, LV_OBJ_FLAG_CLICKABLE);
+            lv_obj_add_event_cb(b, page_ctl_cb, LV_EVENT_CLICKED, (void*)(intptr_t)i);
+            page_ctl_lbl[i] = lv_label_create(b);
+            lv_label_set_text(page_ctl_lbl[i], TXT[i]);
+            lv_obj_set_style_text_font(page_ctl_lbl[i], L.pill_font, 0);
+            lv_obj_set_style_text_color(page_ctl_lbl[i], COL_TEAL, 0);
+            lv_obj_center(page_ctl_lbl[i]);
+        }
+    }
+
     page_px[DVIEW_CARD] = page_creature_px;   // after the card with art, which may make it smaller
     page_layout();
 }
@@ -1383,6 +1481,12 @@ void ui_page_show(const char* pg, const char* title, const char* l1, const char*
     // update in place: no wake, no bar sweep.
     const bool appearing = !ui_page_visible() || !same_page;
     strlcpy(page_name, name, sizeof(page_name));
+    if (!same_page) page_layout();   // the transport row comes or goes with the spotify page
+    const bool playing = strcmp(a, "dance") == 0;   // the engine sends echo headphones while paused
+    if (playing != page_ctl_playing) {
+        page_ctl_playing = playing;
+        lv_label_set_text(page_ctl_lbl[1], playing ? "||" : ">");
+    }
 
     set_text_if_changed(page_lbl_title, page_txt_title, sizeof(page_txt_title), t);
     for (int i = 0; i < 3; i++) {
@@ -1857,6 +1961,7 @@ static void update_view_state(void) {
 void ui_tick_anim(void) {
     approve_tick();
     notify_tick();
+    page_ctl_tick();
 #ifdef FEATURE_PICTURE
     page_art_sync();   // a picture that has come in; the card lays out around it, in sight or not
 #endif

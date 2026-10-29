@@ -12,3 +12,5 @@
 #define THEME_AMBER    lv_color_hex(0xd97757)
 #define THEME_RED      lv_color_hex(0xc0392b)
 #define THEME_BAR_BG   lv_color_hex(0x2a2a28)   // unfilled bar track
+#define THEME_TEAL     lv_color_hex(0x35e0c0)   // ECHO accent: the music card's touch transport labels
+#define THEME_PRESSED  lv_color_hex(0x3d3d3a)   // a touch button while a finger is on it
