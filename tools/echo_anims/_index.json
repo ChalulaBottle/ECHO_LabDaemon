@@ -605,6 +605,38 @@
     "tier": "big"
   },
   {
+    "filename": "fable_work.html",
+    "name": "fable work",
+    "category": "Active",
+    "frame_count": 19,
+    "palette_size": 8,
+    "tier": "big"
+  },
+  {
+    "filename": "fable_write.html",
+    "name": "fable write",
+    "category": "Active",
+    "frame_count": 22,
+    "palette_size": 8,
+    "tier": "big"
+  },
+  {
+    "filename": "fable_read.html",
+    "name": "fable read",
+    "category": "Thinking",
+    "frame_count": 19,
+    "palette_size": 7,
+    "tier": "big"
+  },
+  {
+    "filename": "fable_done.html",
+    "name": "fable done",
+    "category": "Mode",
+    "frame_count": 17,
+    "palette_size": 8,
+    "tier": "big"
+  },
+  {
     "filename": "ctf_hoodie_hd.html",
     "name": "ctf hoodie hd",
     "category": "Idle",
