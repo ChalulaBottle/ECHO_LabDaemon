@@ -23,8 +23,8 @@ const ROOT = path.join(__dirname, '..');
 const BENCH_DIR = path.join(ROOT, 'docs', 'bench');
 const PAGE = path.join(ROOT, 'docs', 'index.html');
 const CAPTIONS = path.join(__dirname, 'site_gallery_captions.json');
-// The firmware table that was last flashed to the 4 inch board (2026-10-01). Move it on after every flash.
-const FLASHED_REV = '11e2bc2';
+// The firmware table that was last flashed to the 4 inch board (2026-10-28, the 131 row table). Move it on after every flash.
+const FLASHED_REV = '1b15905';
 // The branch whose firmware table the next flash carries.
 const NEXT_REV = 'release/increment-4';
 const LEAVE_OFF = new Set(['idle_blink']);
