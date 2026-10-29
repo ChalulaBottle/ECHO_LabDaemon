@@ -113,6 +113,10 @@
   "echo vitruvian",
   "echo wanderer",
   "echo water lilies",
+  "fable work",
+  "fable write",
+  "fable read",
+  "fable done",
   "ctf hoodie hd",
   "echo ssh hd",
   "echo chat ping",
@@ -132,6 +136,6 @@
  ],
  "counts": {
   "base": 73,
-  "big": 127
+  "big": 131
  }
 }
