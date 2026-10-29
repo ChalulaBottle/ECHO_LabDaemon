@@ -394,11 +394,11 @@ The file also says which creature table the board carries, as `table`: `big` whe
 the count of one without (73, the 2.16 AMOLED), and `unknown` for any other count or for old
 firmware. A board that never answers gets no file at all, which means the same as `unknown`.
 
-**Creature names: expiry and per board.** The creature the hooks name in `state.json` goes to
+Creature names: expiry and per board. The creature the hooks name in `state.json` goes to
 the boards as `a` in every usage payload, and a board holds a named creature until it is sent
 another or none. So the daemon lets a name go itself: once `a` and `n` have stood for
 `anim_expire` seconds with no change (90 by default), every payload leaves `a` out, which the
-board reads as its own choice again (its shuffle and wildcard pool), and the log says
+board reads as its own choice again (its own rotation, whatever its firmware does), and the log says
 `Host creature '<name>' stood 90 s with no change: handed back to the board`. A new name, or a
 change of the agent count, puts `a` back at once. The clock starts at the time `state.json` was
 written, so a board that links to a name that has stood for hours gets its own choice back
