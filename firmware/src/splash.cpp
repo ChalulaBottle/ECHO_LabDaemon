@@ -95,6 +95,8 @@ static const char* WILD_NAMES[] = {
     "echo deal with it", "echo kaiju", "echo flag capture", "echo packet sniff", "echo hash cracked",
     "echo terminal glow", "echo pumpkin", "echo ghost sheet", "echo countdown", "echo server rack",
     "echo gpu fan", "echo chat ping", "echo sleepy", "echo curious", "echo focused",
+    // HD remakes (2026-10-28): the hoodie and the ssh session on the 60 lattice.
+    "ctf hoodie hd", "echo ssh hd",
 #endif
 };
 #define WILD_MAX (sizeof(WILD_NAMES) / sizeof(WILD_NAMES[0]))

@@ -115,6 +115,12 @@
 >
 > The last three are moods for the idle rotation. Every culture creature is big tier and sits in the splash's wildcard pool on boards built with SPLASH_BIG; frame sheets of every loop are in `docs/media/sheets/` (made with `tools/anim_sheet.py`).
 >
+> **HD remakes and the packet dodge** (2026-10-28, operator asks): the CTF hoodie and the ssh session redrawn on the 60 cell lattice, and a new ultracode moment, the daemon dodging a volley of packets and splitting into three agents so the wall passes between them (host named for ultracode, not in the wildcard pool):
+>
+> | ctf hoodie hd | echo ssh hd | echo packet dodge |
+> |---|---|---|
+> | ![](docs/media/anims/ctf_hoodie_hd.gif) | ![](docs/media/anims/echo_ssh_hd.gif) | ![](docs/media/anims/echo_packet_dodge.gif) |
+>
 > **Model tiers**, one family, four signatures (Haiku, Sonnet, Opus, Fable):
 >
 > ![Model tier creatures](docs/media/sheets/model-tiers.png)
