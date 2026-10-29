@@ -7,6 +7,37 @@ test the hooks, and it must run on the smaller board too (both plugged in, both 
 
 ## RESUME STATE
 
+- 2026-10-28, animation switching increment 1 BUILT, NOT MERGED, tray NOT restarted, on branch
+  `feat/switching-increment-1` (from 8c2368d, the Fable working set; not pushed). The review is
+  `plans/animation-switching-review.md` (P1, P2, P3's detection and resolver, plus the safe accident fixes).
+  Code commit 831c0a3; this docs commit follows it. What shipped. Tray (`daemon/claude_usage_daemon_windows.py`,
+  `HostHold`): a host named creature that stood `anim_expire` seconds (90, config key, 0 turns it off) with
+  no change of `a` or `n` goes out without `a`, so the board's own rotation resumes; the clock starts at
+  state.json's own time; one log line. Per board: the status answer's `n` gives the board's table (127 big,
+  73 base, anything else unknown, treated as base), kept in `board/<addr>.json` as `table` beside `fw` and
+  `n` for the engine dashboard to show (the engine is unchanged); every push resolves the name through
+  `daemon/anim_fallback.py` (`FALLBACK`: HD to the 20 cell originals, the Fable working set to the echo set,
+  the tier ultra cells to `ultracode work`, otherwise hand back), pushing again when the answer changes the
+  name; `tools/board_tables.py` writes `daemon/board_tables.json` (73 base rows, 54 big). Hooks
+  (`daemon/clawdmeter_hooks.py`, `ROTATIONS`, `ROTATE_S` 25 s): fable prompts after the signature rotate
+  `fable gaze`, `fable eyes`, `model fable`; ultracode work rotates each tier's ultra cell then `ultra cube`,
+  `ultra braille`, `ultramode` (haiku and unknown start from `ultracode work`); the position is kept per
+  session in hooks.json and moves only when the name lands. The workflow flag is per session now (an old
+  global flag moves into its session), so another session's tools keep their own creatures; `job done`
+  holds 4 s (`JOB_HOLD_S`) against another session's agent events; the token burner shows at prompts only
+  within 60 s of its crossing, then the tier has the prompts back. Tests: 785 pass and 1 fail before (the
+  Fable working set names were in no table), 844 pass and 2 skipped after (58 new in
+  `daemon/tests/test_windows_switching.py`). Left as is: the 3 agents rule still counts agents across all
+  sessions, so a subagent tool call in another session shows ultra work while a workflow runs 3 or more.
+  Operator steps: merge into `release/increment-4` in the `Temp Clawdmeter` checkout (the hooks go live on
+  the next event there, since settings.json runs that working tree), then restart the tray (Quit and start
+  it), then read `%LOCALAPPDATA%\Clawdmeter\board\*.json` to see each board's `table`, `fw` and `n` (no file
+  for D4 means it never answered: firmware from before the cmd message, table unknown). What the panel
+  should do afterwards: in a workflow the creature changes about every 25 s through the tier's ultra set
+  instead of sitting on `fable ultra`; within 90 s of work stopping (agents done, nobody typing) the board
+  goes back to its own rotation instead of holding `agents join` or `job done` for hours; the 2.16 AMOLED
+  shows the echo set (`echo work`, `echo write`, `echo read`, `job done`) while Fable works. Not verified:
+  a real board link (no board was touched, nothing flashed).
 - 2026-10-28, music card touch transport BUILT, NOT FLASHED, on branch `feat/music-touch-buttons` (from
   `release/increment-4`, not merged, not pushed). Three touch buttons on the `spotify` page (ui.cpp `page_ctl`):
   previous `|<`, play or pause (`>` paused, `||` while `pa` is `dance`), next `>|`, 96 by 56 px, 12 px apart,
