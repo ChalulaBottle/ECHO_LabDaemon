@@ -336,7 +336,8 @@ def test_workflow_enters_ultracode_then_works_in_it_until_its_agents_are_done(fi
     assert fire("SubagentStart", at=10, agent_id="w1", agent_type="general-purpose") == \
         {"agents": 1, "anim": "ultracode work", "mode": "ultracode"}
     assert fire("SubagentStart", at=11, agent_id="w2")["agents"] == 2
-    assert fire("SubagentStop", at=40, agent_id="w1")["anim"] == "ultracode work"
+    # ultracode work has stood since 5 s, past ROTATE_S: the next of the set goes up
+    assert fire("SubagentStop", at=40, agent_id="w1")["anim"] == "ultra cube"
     assert fire("SubagentStop", at=50, agent_id="w2") == \
         {"agents": 0, "anim": "agents join", "mode": "ultracode"}
     assert fire("Stop", at=55) == {"agents": 0, "anim": "job done", "mode": "done"}
@@ -347,7 +348,8 @@ def test_workflow_mode_ends_when_its_agents_stay_gone(fire):
     fire("PreToolUse", at=0, tool_name="Workflow")
     fire("SubagentStart", at=5, agent_id="w1")
     fire("SubagentStop", at=30, agent_id="w1")
-    assert fire("PreToolUse", at=40, tool_name="Read")["anim"] == "ultracode work"    # between phases
+    # between phases, still ultracode (the set moved on: ultracode work stood from 5 s, past ROTATE_S)
+    assert fire("PreToolUse", at=40, tool_name="Read")["anim"] == "ultra cube"
     assert fire("PreToolUse", at=30 + hooks.ULTRA_GAP_S + 1, tool_name="Read") == \
         {"agents": 0, "anim": "echo read", "mode": ""}
 
@@ -859,9 +861,26 @@ def test_print_settings_prints_the_hooks_block_and_writes_nothing(capsys, relay_
     assert not relay_files.exists()
 
 
-def test_every_name_the_hooks_can_send_is_in_the_firmware_table():
-    names = _firmware_names()
-    assert hooks.ANIMS <= names, sorted(hooks.ANIMS - names)
+def test_every_name_the_hooks_can_send_reaches_every_board():
+    """Each build's table, base (without SPLASH_BIG, the 2.16 AMOLED) and big (with
+    it, the 4 inch LCD), straight from the header. A hook name either sits in the
+    base table, or the tray's resolver (anim_fallback) has a chain for it that ends
+    in the base table, so no board is ever sent a name it lacks."""
+    from daemon import anim_fallback
+    from tools import board_tables
+    t = board_tables.tables(FIRMWARE_TABLE.read_text(encoding="utf-8"))
+    base, big = set(t["base"]), set(t["base"]) | set(t["big"])
+    assert _firmware_names() == big                                            # the old reading, all rows
+    for name in hooks.ANIMS:
+        if name in base:
+            continue
+        chain = anim_fallback.FALLBACK.get(name)
+        assert chain, f"{name!r} is in no base table and has no fallback chain"
+        assert any(alt in base for alt in chain), f"{name!r}: no fallback in the base table"
+    for name, chain in anim_fallback.FALLBACK.items():
+        assert all(alt in base for alt in chain), (name, chain)                # every target: base
+    # the big only names the hooks send today (none yet): each has its chain
+    assert {n for n in hooks.ANIMS if n in big and n not in base} <= set(anim_fallback.FALLBACK)
     assert all(0 < len(n) <= state.ANIM_MAX for n in hooks.ANIMS)
     # ANIMS is the whole set: finish() writes nothing outside it (tested above),
     # and every creature the handlers pick is inside it.
@@ -872,6 +891,7 @@ def test_every_name_the_hooks_can_send_is_in_the_firmware_table():
     picked |= {hooks.tier_anim(tier, role, "")
                for _, tier in hooks.MODEL_TIERS
                for role in ("think", "ultra", "switch", *hooks.TIER_ROLES.values())} - {""}
+    picked |= {a for roles in hooks.ROTATIONS.values() for names in roles.values() for a in names}
     picked |= {hooks.tool_anim(t, {"command": c})
                for t in ("Edit", "Read", "Bash", "PowerShell", "WebFetch", "Skill", "Other")
                for c in ("ls", "ssh host")}

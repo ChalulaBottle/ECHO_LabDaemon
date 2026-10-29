@@ -30,6 +30,11 @@ from bleak.backends.device import BLEDevice
 from bleak.backends.service import BleakGATTServiceCollection
 from bleak.exc import BleakError
 
+try:  # the tray imports this as daemon.claude_usage_daemon_windows; run as a script, it sits beside it
+    from daemon import anim_fallback
+except ImportError:  # pragma: no cover
+    import anim_fallback
+
 DEVICE_NAME = "ECHO_LabDaemon"
 # The names the board advertised before the renames; a Windows bond made then keeps that one as
 # the FriendlyName until the next pairing, so the bonded lookup accepts all of them.
@@ -302,6 +307,73 @@ def read_clock_setting() -> str:
     except OSError:
         pass
     return "off"
+
+
+ANIM_EXPIRE_DEFAULT = 90   # seconds a host named creature stands with no change before the board gets it back
+
+
+def read_anim_expire() -> float:
+    """Read the `anim_expire` option from the config file: whole seconds a host
+    named creature ("a") stands with no change in state.json before the tray
+    stops sending it, so the board's own rotation comes back. 0 turns the
+    expiry off. Defaults to ANIM_EXPIRE_DEFAULT; a value that is no whole number
+    of 0 or more is ignored (the default stands)."""
+    try:
+        if CONFIG_FILE.exists():
+            for line in CONFIG_FILE.read_text().splitlines():
+                line = line.split("#", 1)[0].strip()
+                if "=" not in line:
+                    continue
+                key, val = line.split("=", 1)
+                if key.strip().lower() == "anim_expire":
+                    val = val.strip()
+                    if val.isdigit():
+                        return float(int(val))
+    except OSError:
+        pass
+    return float(ANIM_EXPIRE_DEFAULT)
+
+
+class HostHold:
+    """The host's creature name with an expiry (plans/animation-switching-review.md, P1).
+
+    The board holds a host named creature until the host names another or "",
+    and the hooks have no process between events to take one down. So the tray
+    does: once the state fields ("a" and "n") have stood read_anim_expire()
+    seconds with no change, out() leaves "a" out, which the board reads as ""
+    (its own rotation again), on this push and every later one. A change of "a"
+    or "n" arms it again; a rewrite of state.json that changes neither (the mode
+    words alone) does not. The clock starts at the file's own time, so a link
+    made to a name that has stood for hours hands it back at once."""
+
+    def __init__(self) -> None:
+        self.fields: dict = {}
+        self.since = 0.0
+        self.expire_s = float(ANIM_EXPIRE_DEFAULT)
+        self.expired = False
+
+    def update(self, fields: dict, changed_at: float) -> None:
+        if fields.get("a") != self.fields.get("a") or fields.get("n") != self.fields.get("n"):
+            self.since = changed_at
+            self.expired = False
+            self.expire_s = read_anim_expire()
+        self.fields = fields
+
+    def due(self, now: float) -> bool:
+        """True once, at the moment the name expires (after a log line)."""
+        if self.expired or "a" not in self.fields or self.expire_s <= 0:
+            return False
+        if now - self.since < self.expire_s:
+            return False
+        self.expired = True
+        log(f"Host creature {self.fields['a']!r} stood {int(self.expire_s)} s with no change:"
+            f" handed back to the board")
+        return True
+
+    def out(self) -> dict:
+        if self.expired:
+            return {k: v for k, v in self.fields.items() if k != "a"}
+        return dict(self.fields)
 
 
 def add_chime_field(payload: dict) -> None:
@@ -1147,6 +1219,14 @@ class Session:
         self._status: dict = {}  # the fields of the board's latest status report
         self._last: dict | None = None  # its answer to the latest cmd: {"c", "ok": 1} or {"c", "err"}
         self._cmd_ok: bool | None = None  # whether it takes cmds; None until it has answered one
+        # The creature table this board carries (anim_fallback): "big" or "base" from the "n" of
+        # its status report, "unknown" until then (names resolve as base). table_dirty asks the
+        # link's tick to push again when the answer changes what this board should be sent.
+        self.table = anim_fallback.UNKNOWN
+        self.table_dirty = False
+        self._resolved: tuple | None = None  # (host name, name sent) last logged for this board
+        self.sent_anim: str | None = None  # the "a" the latest usage push carried (None: none)
+        self._silence_noted = False  # the status cmd went unanswered past CMD_NACK_WAIT (logged once)
         self._last_write = -math.inf  # time.monotonic() of the previous write (WRITE_GAP)
         # One write at a time on this link, whichever task asks: relay_wifi writes to every
         # board from one link's task, while a board's own write may be under way.
@@ -1251,6 +1331,7 @@ class Session:
             if verb == "status":
                 self._status = {k: msg[k] for k, ok in STATUS_FIELDS.items() if k in msg and ok(msg[k])}
                 log(f"Cmd status: {self._status} ({board})")
+                self._set_table(anim_fallback.table_of(self._status.get("n")))
             else:
                 log(f"Cmd {verb} done ({board})")
         self._cmd_ok = True
@@ -1293,15 +1374,62 @@ class Session:
             return
         answer.set_result(verdict)
 
+    # The creature table (anim_fallback): which one this board carries, and the name each push
+    # gives it.
+
+    def _set_table(self, table: str) -> None:
+        if table != self.table:
+            self.table = table
+            self.table_dirty = True
+        log(f"Board table: {table} (fw {self._status.get('fw', '?')}, n {self._status.get('n', '?')})"
+            f" ({self.address or 'address unknown'})")
+
+    def status_overdue(self) -> None:
+        """The link's report went unanswered past CMD_NACK_WAIT: the table stays unknown
+        (names resolve as base). One log line; no board/ file, which only a board's answer
+        writes, so a missing file means the same."""
+        waiting = self._cmd_waiting
+        if (self._silence_noted or waiting is None or waiting[0] != "status"
+                or time.monotonic() - waiting[1] <= CMD_NACK_WAIT):
+            return
+        self._silence_noted = True
+        log(f"No status answer within {CMD_NACK_WAIT:g} s: creature table unknown, names resolve as base")
+
+    def resolved_anim(self, fields: dict):
+        """The "a" this board should get for the host's fields, or None for none."""
+        name = fields.get("a")
+        return None if name is None else anim_fallback.resolve(name, self.table)
+
+    def board_fields(self, fields: dict) -> dict:
+        """The host's state fields as this board should get them: "a" resolved against its
+        table, left out when the table holds neither it nor a fallback (the hand back). One
+        log line per board each time a name resolves to something else."""
+        out = dict(fields)
+        name = out.pop("a", None)
+        self.sent_anim = None
+        if name is None:
+            return out
+        sent = self.sent_anim = anim_fallback.resolve(name, self.table)
+        if (name, sent) != self._resolved:
+            self._resolved = (name, sent)
+            if sent != name:
+                table = self.table if self.table != anim_fallback.UNKNOWN else "unknown (as base)"
+                log(f"Creature {name!r} is not in this board's {table} table: "
+                    + (f"sending {sent!r}" if sent else "handing back to the board"))
+        if sent is not None:
+            out["a"] = sent
+        return out
+
     def _write_report(self) -> None:
         """board/<address, dashes for colons>.json for the engine: the board's latest status
-        fields with "cmd" (whether it takes cmds), "last" (its answer to the latest cmd), "ts",
-        "addr" and "name". Written whole, by atomic replace. A link without a board address of
-        the usual shape writes none; a failed write is logged, never raised."""
+        fields with "cmd" (whether it takes cmds), "last" (its answer to the latest cmd),
+        "table" (the creature table it carries: "big", "base" or "unknown", from the report's
+        "n"), "ts", "addr" and "name". Written whole, by atomic replace. A link without a board
+        address of the usual shape writes none; a failed write is logged, never raised."""
         if not BOARD_ADDRESS.fullmatch(self.address or ""):
             return
         report = dict(self._status)
-        report.update({"cmd": self._cmd_ok, "last": self._last, "ts": time.time(),
+        report.update({"cmd": self._cmd_ok, "last": self._last, "table": self.table, "ts": time.time(),
                        "addr": self.address, "name": self.name})
         try:
             _write_json_atomic(BOARD_DIR / f"{self.address.replace(':', '-')}.json", report)
@@ -1954,8 +2082,21 @@ async def connect_and_run(device, stop_event: asyncio.Event, tray_state=None,
     used_successfully = False
     consecutive_failures = 0  # D-03: zombie-link break counter
     last_state = None  # state file stamp as of the previous tick
-    state_fields: dict = {}  # last good "n"/"a" fields, merged into every payload
+    # The last good "n"/"a" fields, merged into every payload: through the expiry (HostHold),
+    # then resolved against this board's creature table (Session.board_fields).
+    hold = HostHold()
     last_usage: dict | None = None  # the last polled usage payload, without the state fields
+
+    async def push_state() -> None:
+        """The state fields to the board now: with a fresh usage payload in hand, resent with
+        them and no API call; otherwise a poll, like a device refresh request."""
+        if last_usage is not None and time.time() - last_poll < POLL_INTERVAL:
+            cached = dict(last_usage)
+            add_clock_fields(cached)
+            cached.update(session.board_fields(hold.out()))
+            await session.write_payload(cached)
+        else:
+            session.refresh_requested.set()
     last_approve = approve_stamp()  # a request left over from before this link is stale, not ours to show
     # A notification from before this link is old news too, like a leftover prompt.
     last_notify = notify_stamp()
@@ -1982,15 +2123,21 @@ async def connect_and_run(device, stop_event: asyncio.Event, tray_state=None,
                 last_state = stamp
                 fields = read_state_fields()
                 if fields is not None:  # None = malformed; keep the last good state
-                    state_fields = fields
-                    log(f"State file changed: {state_fields or 'absent'}")
-                    if last_usage is not None and time.time() - last_poll < POLL_INTERVAL:
-                        cached = dict(last_usage)
-                        add_clock_fields(cached)
-                        cached.update(state_fields)
-                        await session.write_payload(cached)
-                    else:
-                        session.refresh_requested.set()
+                    # The expiry clock starts when the file was written, never later than now.
+                    hold.update(fields, min(time.time(), stamp[0] / 1e9) if stamp else time.time())
+                    log(f"State file changed: {fields or 'absent'}")
+                    hold.due(time.time())   # a name already past its time (an old file) goes without "a"
+                    await push_state()
+            elif hold.due(time.time()):
+                # The host's name stood anim_expire seconds: the board gets its own choice back.
+                await push_state()
+            # The board's creature table became known (its status answer): push again only if
+            # that changes the name this board was last given.
+            if session.table_dirty:
+                session.table_dirty = False
+                if session.resolved_anim(hold.out()) != session.sent_anim:
+                    await push_state()
+            session.status_overdue()
             # A permission prompt to relay (or its clear): straight to the
             # device as its own message. No API call in the way, and no merge
             # into the usage payload, which a prompt must never wait on.
@@ -2061,7 +2208,7 @@ async def connect_and_run(device, stop_event: asyncio.Event, tray_state=None,
                         payload = None
                     if payload is not None:
                         last_usage = dict(payload)
-                        payload.update(state_fields)
+                        payload.update(session.board_fields(hold.out()))
                         if await session.write_payload(payload):
                             last_poll = time.time()
                             used_successfully = True

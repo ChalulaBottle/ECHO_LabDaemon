@@ -30,3 +30,7 @@ chime = off
 #   12   = show the clock, forced 12-hour  (e.g. 6:28 PM)
 #   24   = show the clock, forced 24-hour  (e.g. 18:28)
 clock = off
+# Windows tray only: seconds a creature named by the Claude Code hooks stands
+# with no change before the board gets its own rotation back. A whole number;
+# 0 never lets a name go. Read each time a new name arrives. Default 90.
+# anim_expire = 90

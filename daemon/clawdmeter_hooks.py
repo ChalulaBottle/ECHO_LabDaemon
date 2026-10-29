@@ -29,8 +29,11 @@ SessionStart          token burner, else ctf hoodie, else the model tier, else "
                       the loading bar of a compaction typed by hand
 UserPromptSubmit      token burner, else ctf hoodie, else the model tier, else
                       "echo think spin". On fable the session's first prompt
-                      shows "model fable" and every later one "fable gaze"; the
-                      other tiers show their tier creature at every prompt
+                      shows "model fable" and the later ones rotate through
+                      "fable gaze", "fable eyes" and "model fable" (ROTATIONS,
+                      the next one once the current has stood ROTATE_S); the
+                      other tiers show their tier creature at every prompt. The
+                      token burner shows only within 60 s of its crossing
 PreToolUse            Edit Write MultiEdit NotebookEdit: "echo write"
                       Read Glob Grep: "echo read"
                       Bash PowerShell: "echo work"; "echo ssh" when the command
@@ -43,7 +46,10 @@ PreToolUse            Edit Write MultiEdit NotebookEdit: "echo write"
                       later tool call while its agents run (mode word "ultracode")
                       ultracode work is "fable ultra", "opus ultra" or "sonnet
                       ultra" on those tiers, "ultracode work" on haiku or an
-                      unknown tier
+                      unknown tier, each followed in turn by "ultra cube",
+                      "ultra braille" and "ultramode" (ROTATIONS, ROTATE_S); the
+                      workflow flag is per session, so only the session that
+                      launched it works in ultracode
                       anything else: "echo work" ("fable work" on fable)
                       inside a subagent (agent_id set): the agents creature
                       the first call after the token reading crosses 500k:
@@ -53,8 +59,10 @@ SubagentStart, Stop   count running subagents (the N AGENTS badge); "agents join
                       when the last one finishes
 Stop                  "job done" ("fable done" on fable) plus mode word "done"; the
                       next event of any kind
-                      clears it. Not while this session still has agents running,
-                      nor right after launching a workflow whose agents are not up yet
+                      clears it, except another session's agent events inside
+                      JOB_HOLD_S (4 s), which show nothing. Not while this
+                      session still has agents running, nor right after
+                      launching a workflow whose agents are not up yet
 Notification          idle_prompt: back to the device's choice (also covers Esc,
                       which fires no Stop). Permission prompts: nothing (they
                       belong to the approve hook)
@@ -166,9 +174,28 @@ TIER_ANIMS = {
 # loading, the agents names or the burner: those stay the same on every tier.
 TIER_ROLES = {WRITE: "write", READ: "read", WORK: "work", JOB_DONE: "done"}
 TIER_NAMES = frozenset(a for _, a in MODEL_TIERS)
+# Variety (plans/animation-switching-review.md, P2): the roles that rotate through
+# a set instead of standing on one name, by tier creature (None: haiku and an
+# unknown tier). "think" is the resting role (a prompt after the session's first;
+# the first prompt keeps the signature, the set's first member), "ultra" the
+# ultracode work role. Each time the role is named again and its current member
+# has stood ROTATE_S, the next member goes up (wrapping); the position is kept
+# per session in hooks.json. A tier with no "think" set keeps tier_anim's one name.
+ULTRA_SHARED = ("ultra cube", "ultra braille", "ultramode")
+ROTATIONS = {
+    "model fable": {"think": ("model fable", "fable gaze", "fable eyes"),
+                    "ultra": ("fable ultra",) + ULTRA_SHARED},
+    "model opus": {"ultra": ("opus ultra",) + ULTRA_SHARED},
+    "model sonnet": {"ultra": ("sonnet ultra",) + ULTRA_SHARED},
+    None: {"ultra": (ULTRA_WORK,) + ULTRA_SHARED},
+}
 ANIMS = frozenset({THINK, WRITE, READ, WORK, SSH, CONSULT, LOADING, TWO_AGENTS, AGENTS_JOIN,
                    ULTRA_ENTER, ULTRA_WORK, JOB_DONE, BURNER, CTF} | TIER_NAMES
-                  | {a for roles in TIER_ANIMS.values() for a in roles.values()})
+                  | {a for roles in TIER_ANIMS.values() for a in roles.values()}
+                  | {a for roles in ROTATIONS.values() for names in roles.values() for a in names})
+# The events of agent work: inside JOB_HOLD_S of another session's "job done"
+# these show nothing (the hold), whatever their force.
+AGENT_EVENTS = frozenset({"PreToolUse", "PostToolUse", "SubagentStart", "SubagentStop"})
 HOOK_WORDS = ("ultracode", "done")   # mode words this script owns
 
 WRITE_TOOLS = frozenset({"Edit", "Write", "MultiEdit", "NotebookEdit"})
@@ -180,6 +207,8 @@ SSH_WORDS = ("ssh", "scp", "sftp")
 USAGE_KEYS = ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens")
 
 DWELL_S = 3.0             # a tool call this soon after a creature change leaves it on screen; 0 = every call
+ROTATE_S = 25.0           # a rotating role's member stands at least this long before the next goes up
+JOB_HOLD_S = 4.0          # "job done" stands at least this long against another session's agent events
 BURN_TOKENS = 500_000     # token burner above this many tokens in the newest request
 BURN_HOLD_S = 60.0        # and stays at least this long after the last reading above
 ULTRA_GRACE_S = 120.0     # Workflow launched: time for its first agent to show up
@@ -516,10 +545,12 @@ def _clean_sidecar(data) -> dict:
     anim_t = _num(data.get("anim_t"))
     if anim_t is not None:
         out["anim_t"] = anim_t
-    u = data.get("ultra")
-    if (isinstance(u, dict) and isinstance(u.get("sid"), str) and _num(u.get("since")) is not None
-            and (u.get("seen") is None or _num(u.get("seen")) is not None)):
-        out["ultra"] = {"sid": u["sid"], "since": _num(u["since"]), "seen": _num(u.get("seen"))}
+    if isinstance(data.get("anim_sid"), str):
+        out["anim_sid"] = data["anim_sid"]
+    # The workflow flag of an older sidecar was one slot for every session: it
+    # moves into the record of the session that launched the workflow.
+    old_ultra = data.get("ultra")
+    old_ultra = old_ultra if isinstance(old_ultra, dict) and isinstance(old_ultra.get("sid"), str) else None
     sessions = data.get("sessions")
     if not isinstance(sessions, dict):
         return out
@@ -540,8 +571,25 @@ def _clean_sidecar(data) -> dict:
         burn = s.get("burn")
         if isinstance(burn, dict) and isinstance(burn.get("on"), bool) and _num(burn.get("hi")) is not None:
             rec["burn"] = {"on": burn["on"], "hi": _num(burn["hi"])}
+            if _num(burn.get("x")) is not None:
+                rec["burn"]["x"] = _num(burn["x"])
         if s.get("compact") == "manual":
             rec["compact"] = "manual"
+        u = s.get("ultra")
+        if u is None and old_ultra is not None and old_ultra["sid"] == sid:
+            u = old_ultra
+        if (isinstance(u, dict) and _num(u.get("since")) is not None
+                and (u.get("seen") is None or _num(u.get("seen")) is not None)):
+            rec["ultra"] = {"since": _num(u["since"]), "seen": _num(u.get("seen"))}
+        rot = s.get("rot")
+        if isinstance(rot, dict):
+            clean = {}
+            for role, pos in rot.items():
+                if (role in ("think", "ultra") and isinstance(pos, dict) and isinstance(pos.get("i"), int)
+                        and not isinstance(pos.get("i"), bool) and pos["i"] >= 0 and _num(pos.get("t")) is not None):
+                    clean[role] = {"i": pos["i"], "t": _num(pos["t"])}
+            if clean:
+                rec["rot"] = clean
         out["sessions"][sid] = rec
     return out
 
@@ -621,14 +669,14 @@ class _Run:
         self.proposal = None
         self.force = False
         self._tail = None
+        self._rot = None   # (role, record) of a rotation this run proposes, kept once it lands (finish)
         self.sessions = side["sessions"]
         self._prune()
         # The workflow flag needs both halves: the mode word (the operator can
-        # clear it by hand) and its record here.
-        if "ultracode" not in words:
-            side.pop("ultra", None)
-        if self.ultra() and not self.ultra_live():
-            self.ultra_off()
+        # clear it by hand) and its record here, one per session.
+        for sid, s in self.sessions.items():
+            if "ultra" in s and ("ultracode" not in words or not self.ultra_live(sid)):
+                del s["ultra"]
         self.sess = self._touch()
 
     # -- bookkeeping --------------------------------------------------------
@@ -716,25 +764,33 @@ class _Run:
 
     # -- workflow (ultracode) -------------------------------------------------
 
-    def ultra(self):
-        return self.side.get("ultra")
+    # One flag per session (sessions[sid]["ultra"]): a workflow in one session
+    # paints only that session's work as ultracode, never another's.
+
+    def ultra(self, sid=None):
+        s = self.sessions.get(self.sid if sid is None else sid)
+        return s.get("ultra") if s else None
+
+    def any_ultra(self) -> bool:
+        return any("ultra" in s for s in self.sessions.values())
 
     def ultra_on(self) -> None:
-        self.side["ultra"] = {"sid": self.sid, "since": self.now, "seen": None}
+        self.sess["ultra"] = {"since": self.now, "seen": None}
 
     def ultra_off(self) -> None:
-        self.side.pop("ultra", None)
+        self.sess.pop("ultra", None)
 
     def ultra_seen(self) -> None:
         u = self.ultra()
-        if u and u["sid"] == self.sid and (u["seen"] is None or abs(self.now - u["seen"]) >= 5.0):
+        if u and (u["seen"] is None or abs(self.now - u["seen"]) >= 5.0):
             u["seen"] = self.now
 
-    def ultra_live(self) -> bool:
-        u = self.ultra()
+    def ultra_live(self, sid=None) -> bool:
+        sid = self.sid if sid is None else sid
+        u = self.ultra(sid)
         if not u:
             return False
-        if self.agents(u["sid"]):
+        if self.agents(sid):
             return True
         if u["seen"] is None:
             return self.now - u["since"] < ULTRA_GRACE_S
@@ -771,9 +827,23 @@ class _Run:
                 hi = self.now
         else:
             on = was_on and self.now - hi < BURN_HOLD_S
-        if (on, hi) != (was_on, old_hi):
-            self.sess["burn"] = {"on": on, "hi": hi}
-        return on, on and not was_on
+        crossed = on and not was_on
+        if (on, hi) != (was_on, old_hi) or crossed:
+            rec = {"on": on, "hi": hi}
+            x = self.now if crossed else b.get("x")
+            if x is not None:
+                rec["x"] = x
+            self.sess["burn"] = rec
+        return on, crossed
+
+    def burner_moment(self, tokens) -> bool:
+        """The burner as a moment at a prompt or a session start: shown only
+        within BURN_HOLD_S of its crossing (a reading above 500k after none);
+        after that the tier gets the prompts again for as long as the reading
+        stays above. A record from before the crossing stamp counts as old."""
+        on, _ = self.burner(tokens)
+        x = (self.sess.get("burn") or {}).get("x")
+        return on and x is not None and self.now - x < BURN_HOLD_S
 
     def ctf(self) -> bool:
         return _is_ctf(self.p.get("cwd")) or any(w.lower() == "ctf" for w in self.keep)
@@ -781,21 +851,50 @@ class _Run:
     # -- choosing ---------------------------------------------------------------
 
     def turn_start(self, default: str, tokens, tail_model, prompt: bool = False) -> str:
-        on, _ = self.burner(tokens)
-        if on:
+        if self.burner_moment(tokens):
             return BURNER
         if self.ctf():
             return CTF
         tier = self.model(tail_model)
+        if prompt and not self.sess.get("prompted"):
+            # The first prompt: the signature, and the resting set starts from it
+            # (stamped long ago, so the next prompt moves on at once).
+            self.sess.setdefault("rot", {})["think"] = {"i": 0, "t": 0.0}
         if not tier:
             return default
-        # SessionStart and the first prompt show the tier creature; later prompts its thinking one
-        return tier_anim(tier, "think", tier) if prompt and self.sess.get("prompted") else tier
+        # SessionStart and the first prompt show the tier creature; later prompts its resting set
+        if not (prompt and self.sess.get("prompted")):
+            return tier
+        return self.rotate(tier, "think") or tier_anim(tier, "think", tier)
+
+    def rotate(self, tier, role: str):
+        """The member of the tier's set for `role` (ROTATIONS) this event names:
+        the current one, or the next once the current has stood ROTATE_S. None
+        when the tier has no set for the role. The move is kept only if the name
+        lands (finish), so a dropped or stale run never moves the position."""
+        names = (ROTATIONS.get(tier) or {}).get(role)
+        if names is None and tier not in ROTATIONS:
+            names = ROTATIONS[None].get(role)
+        if not names:
+            return None
+        pos = (self.sess.get("rot") or {}).get(role)
+        if pos is None and role == "think":   # prompted before the sets existed: past the signature
+            pos = {"i": 0, "t": 0.0}
+        if pos is None:
+            rec = {"i": 0, "t": self.now}
+        elif self.now - pos["t"] >= ROTATE_S:
+            rec = {"i": (pos["i"] + 1) % len(names), "t": self.now}
+        else:
+            rec = {"i": pos["i"] % len(names), "t": pos["t"]}
+        name = names[rec["i"]]
+        self._rot = (role, rec, name)
+        return name
 
     def ultra_work(self) -> str:
         """Ultracode work in the session's tier, from the cached tier only (no
-        transcript read: agent events come in bursts)."""
-        return tier_anim(self.sess.get("model"), "ultra", ULTRA_WORK)
+        transcript read: agent events come in bursts), rotating through the
+        tier's ultra set."""
+        return self.rotate(self.sess.get("model"), "ultra") or tier_anim(self.sess.get("model"), "ultra", ULTRA_WORK)
 
     def tiered(self, anim: str) -> str:
         """A plain creature of TIER_ROLES in the session's tier (the cached one)."""
@@ -821,10 +920,20 @@ class _Run:
         last = self.side.get("anim_t")
         return last is not None and self.now < last
 
+    def held(self) -> bool:
+        """Another session's "job done" (or the tier's own done creature) is
+        inside its JOB_HOLD_S and this run is agent work: it shows nothing and
+        does not clear the done. A short hold, not a dwell: prompts, stops,
+        session starts and ends from any session still go through."""
+        if not self.was_done or self.event not in AGENT_EVENTS:
+            return False
+        owner, last = self.side.get("anim_sid"), self.side.get("anim_t")
+        return owner is not None and owner != self.sid and last is not None and self.now - last < JOB_HOLD_S
+
     def finish(self) -> dict:
         anim = self.cur["anim"]
         done = self.done
-        if self.stale():  # bookkeeping above still counts; the creature and "job done" stay
+        if self.stale() or self.held():  # bookkeeping above still counts; the creature and "job done" stay
             done = self.was_done
         else:
             proposal, force = self.proposal, self.force
@@ -837,8 +946,13 @@ class _Run:
                 if force or last is None or self.now - last >= DWELL_S:
                     anim = proposal
                     self.side["anim_t"] = self.now
+                    self.side["anim_sid"] = self.sid
+            if self._rot is not None and proposal == self._rot[2] and anim == proposal:
+                role, rec, _ = self._rot   # the rotation's name is on screen: its position is kept
+                if (self.sess.get("rot") or {}).get(role) != rec:
+                    self.sess.setdefault("rot", {})[role] = rec
         words = list(self.keep)
-        if self.ultra():
+        if self.any_ultra():
             words.append("ultracode")
         if done:
             words.append("done")
@@ -856,10 +970,7 @@ def _on_session_start(r: _Run) -> None:
         if r.sess.pop("compact", None) == "manual" and r.cur["anim"] == LOADING:
             r.propose("", force=True)
         return
-    r.reset_session()
-    u = r.ultra()
-    if u and u["sid"] == r.sid:
-        r.ultra_off()
+    r.reset_session()   # its workflow flag and rotation positions go with the old record
     r.set_model(tier_of(r.p.get("model")), "start")
     tokens, tail_model = _num(r.p.get("context_tokens")), None
     if tokens is None or not r.sess.get("model"):
@@ -928,7 +1039,7 @@ def _on_stop(r: _Run) -> None:
         r.propose(r.agents_anim())
         return
     u = r.ultra()
-    if u and u["sid"] == r.sid:
+    if u:
         if u["seen"] is None and r.now - u["since"] < ULTRA_GRACE_S:
             return  # the workflow was just launched; its agents are not up yet
         r.ultra_off()
@@ -937,8 +1048,8 @@ def _on_stop(r: _Run) -> None:
 
 
 def _on_notification(r: _Run) -> None:
-    if r.agents() or r.ultra_live():
-        return  # background work goes on and its events drive the creature
+    if r.agents() or any(r.ultra_live(sid) for sid in r.sessions):
+        return  # background work goes on (in any session) and its events drive the creature
     r.propose("", force=True)
 
 
@@ -959,10 +1070,7 @@ def _on_model_switch(r: _Run) -> None:
 
 
 def _on_session_end(r: _Run) -> None:
-    r.sessions.pop(r.sid, None)
-    u = r.ultra()
-    if u and u["sid"] == r.sid:
-        r.ultra_off()
+    r.sessions.pop(r.sid, None)   # its workflow flag with it
     r.propose("", force=True)
 
 

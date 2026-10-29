@@ -244,7 +244,7 @@ apart.
 | `wifi.json` | the engine's `wifi set` and `wifi clear`, or you | `{"ssid", "pass"}` | `{"wf", "wp"}`, once to each board, and the file is deleted once a board answers that it stored them (see Wi-Fi) |
 | `cmd\<ns>.json` | the engine | `{"c", "v", "expires"}`, one verb for the boards | `{"c", "v"}`, once, in name order, and the file is deleted (see Commands) |
 | `events\<ns>.json` | the daemon | `{"btn", "scr", "addr", "ts"}` | nothing: it is for the engine |
-| `board\<address>.json` | the daemon | `{"br", "scr", "an", "fw", "n", "dv", "do"}` from the board's report, with `{"cmd", "last", "ts", "addr", "name"}` | nothing: it is the board's answers, for the engine |
+| `board\<address>.json` | the daemon | `{"br", "scr", "an", "fw", "n", "dv", "do"}` from the board's report, with `{"cmd", "last", "table", "ts", "addr", "name"}` | nothing: it is the board's answers, for the engine |
 | `daemon.pages` | the daemon | `{"boards"}`, the boards it last sent a page to | nothing: it is the daemon's own note |
 
 **Text.** Every text field is capped in bytes of `UTF-8`, the way the board caps it, and never
@@ -389,6 +389,48 @@ board for a report once, as soon as it can hear the board's answers, so the file
 without anyone asking. A board on firmware from before the commands answers one with the
 plain `{"err": true}`: its file then says `cmd` false, with `last` naming the verb and the
 error `old firmware`, and the log says so once for the link. Flash that board to use the verbs.
+The file also says which creature table the board carries, as `table`: `big` when the report's
+`n` is the count of a build with the big tier (127 today, the 4 inch board), `base` when it is
+the count of one without (73, the 2.16 AMOLED), and `unknown` for any other count or for old
+firmware. A board that never answers gets no file at all, which means the same as `unknown`.
+
+Creature names: expiry and per board. The creature the hooks name in `state.json` goes to
+the boards as `a` in every usage payload, and a board holds a named creature until it is sent
+another or none. So the daemon lets a name go itself: once `a` and `n` have stood for
+`anim_expire` seconds with no change (90 by default), every payload leaves `a` out, which the
+board reads as its own choice again (its own rotation, whatever its firmware does), and the log says
+`Host creature '<name>' stood 90 s with no change: handed back to the board`. A new name, or a
+change of the agent count, puts `a` back at once. The clock starts at the time `state.json` was
+written, so a board that links to a name that has stood for hours gets its own choice back
+straight away. A rewrite of `state.json` that changes neither `a` nor `n` (the mode words
+alone) does not count as a change. Set it in `%LOCALAPPDATA%\Clawdmeter\config`, like `clock`:
+
+```
+anim_expire = 90    # seconds, a whole number; 0 never lets a name go
+```
+
+It is read each time a new name arrives, so an edit applies from the next one.
+
+Before every push the daemon also resolves the name for each board against the table that board
+carries (`daemon\board_tables.json`, from the board's `n`, an unknown table counting as base). A
+name the table holds goes as it is. Otherwise the first name of its fallback chain that the table
+holds goes (`daemon\anim_fallback.py`, `FALLBACK`): `echo ssh hd` falls back to `echo ssh`,
+`ctf hoodie hd` to `ctf hoodie`, `fable work`, `fable write` and `fable read` to `echo work`,
+`echo write` and `echo read`, `fable done` to `job done`, and the tier ultra cells to `ultracode
+work`. A name with no chain that the table lacks (the culture and lab creatures on a base board)
+goes as no `a` at all, the board's own choice. The log says once per board each time a name
+resolves to something else, for example `Creature 'fable work' is not in this board's base
+table: sending 'echo work'`. The first payload on a link goes before the board's report arrives,
+so it resolves as base; when the report changes the name the board should have, the same usage
+goes again with it, with no API call. `daemon\board_tables.json` is generated from the firmware
+table: after any change to `firmware\src\splash_animations.h`, run
+
+```powershell
+python tools\board_tables.py            # writes daemon\board_tables.json
+python tools\board_tables.py --check    # exit 1 when the file is out of date
+```
+
+and commit the file with the header (a test checks that the two agree).
 
 **Several boards.** The daemon links every board bonded to this PC whose Bluetooth name is
 ECHO_LabDaemon or one of its older names (ECHO_MiniDaemon, Clawdmeter). Each board gets its
